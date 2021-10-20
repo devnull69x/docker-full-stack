@@ -1,5 +1,5 @@
-# [oc-gerekper-main / devnull.main](https://github.com/gerekper/octobercms-main) #
-Main Navigational System for gerekper.asia modules on OctoberCMS
+# [docker-full-stack](https://github.com/gerekper/docker-full-stack) #
+Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
 
 ## What is it ##
 As the title says, it allows for consolidation of the modules in gerekper.asia arsenal
@@ -21,12 +21,7 @@ Logout from your backend and login again. This will create the necessary tables 
 - Manage navigation for devnull.robot
 - Manage navigation for devnull.seo
 - Manage navigation for devnull.cookies
-- Manage navigation for devnull.bakery
-- Manage navigation for devnull.disqus
-- Manage navigation for devnull.adsmanager
-- Manage navigation for devnull.construction
-- Manage navigation for devnull.database
-- Manage navigation for many more
+
 
 | Function      | Navigational  |  Public    | Admin     | Create    | Update    | Delete
 | :------------ | :------:      | :------:   | :------:  | :------:  | :------:  | :------:
