@@ -17,37 +17,40 @@ services:
       - 'redis_data:/bitnami/redis/data/'
     networks:
       - app-tier
-
-    redis-secondary:
-      image: docker.io/bitnami/redis:6.2-debian-10
-      depends_on:
-        - redis-master
-      deploy:
-        replicas: 1
-      ports:
-        - '6379:6379'
-      environment:
-        - ALLOW_EMPTY_PASSOWRD=no
-        - REDIS_REPLICATION_MODE=slave
-        - REDIS_MASTER_HOST=redis-master
-        - REDIS_MASTER_PORT_NUMBER=6379
-        - REDIS_MASTER_PASSWORD= /run/secrets/redis_master_password
-        - REDIS_PASSWORD= /run/secrets/redis_slave_password
-        - REDIS_REPLICA_IP=$(get_machine_ip)
-        - REDIS_REPLICA_PORT=6379
-        - REDIS_DSIABLE_COMMANDS= FLUSHDB, FLUSHALL, CONFIG
-      networks:
-        - app-tier
-      secrets:
-        - redis_master_password
-        - redis_slave_password
-
+  redis-secondary:
+    image: docker.io/bitnami/redis:6.2-debian-10
+    depends_on:
+      - redis-master
+    deploy:
+      replicas: 1
+    ports:
+      - '6379:6379'
+    environment:
+      - ALLOW_EMPTY_PASSOWRD=no
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - REDIS_MASTER_PASSWORD= /run/secrets/redis_master_password
+      - REDIS_PASSWORD= /run/secrets/redis_slave_password
+      - REDIS_REPLICA_IP=$(get_machine_ip)
+      - REDIS_REPLICA_PORT=6379
+      - REDIS_DSIABLE_COMMANDS= FLUSHDB, FLUSHALL, CONFIG
+    networks:
+      - app-tier
+    secrets:
+      - redis_master_password
+      - redis_slave_password
+  balancer:
+    image:
 volumes:
-    redis_data:
-      driver: local
+    redis_data: {}
 
 networks:
+  pres-tier:
+    driver: bridge
   app-tier:
+    driver: bridge
+  data-tier:
     driver: bridge
 
 secrets:
