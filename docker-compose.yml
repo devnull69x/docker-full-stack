@@ -17,6 +17,8 @@ services:
       - 'redis_data:/bitnami/redis/data/'
     networks:
       - app-tier
+
+
   redis-secondary:
     image: docker.io/bitnami/redis:6.2-debian-10
     depends_on:
@@ -40,8 +42,26 @@ services:
     secrets:
       - redis_master_password
       - redis_slave_password
+
   balancer:
-    image:
+    image: docker.io/bitnami/haproxy:2-debian-10
+    container_name: balancer
+    deploy:
+      replicas: 1
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    networks:
+      - pres-tier
+    volumes:
+      - ./configs/haproxy.cfg:/bitnami/haproxy/conf/haproxy.cfg
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
     redis_data: {}
 
