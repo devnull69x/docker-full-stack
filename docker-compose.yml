@@ -8,7 +8,7 @@ services:
       - redis-cluster_data-0:/bitnami/redis/data
     environment:
       - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
 
   redis-node-1:
     image: docker.io/bitnami/redis-cluster:6.2
@@ -16,7 +16,7 @@ services:
       - redis-cluster_data-1:/bitnami/redis/data
     environment:
       - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
 
   redis-node-2:
     image: docker.io/bitnami/redis-cluster:6.2
@@ -24,28 +24,10 @@ services:
       - redis-cluster_data-2:/bitnami/redis/data
     environment:
       - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
 
-  redis-node-3:
+  redis-master:
     image: docker.io/bitnami/redis-cluster:6.2
-    volumes:
-      - redis-cluster_data-3:/bitnami/redis/data
-    environment:
-      - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
-
-  redis-node-4:
-    image: docker.io/bitnami/redis-cluster:6.2
-    volumes:
-      - redis-cluster_data-4:/bitnami/redis/data
-    environment:
-      - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
-
-  redis-node-5:
-    image: docker.io/bitnami/redis-cluster:6.2
-    volumes:
-      - redis-cluster_data-5:/bitnami/redis/data
     depends_on:
       - redis-node-0
       - redis-node-1
@@ -56,27 +38,36 @@ services:
       - 'REDIS_PASSWORD=bitnami'
       - 'REDISCLI_AUTH=bitnami'
       - 'REDIS_CLUSTER_REPLICAS=1'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
       - 'REDIS_CLUSTER_CREATOR=yes'
+    volumes:
+      - redis-cluster_data-5:/bitnami/redis/data
 
   balancer:
     image: docker.io/bitnami/haproxy:2-debian-10
-    container_name: balancer
+    container_name: haproxy
     deploy:
       replicas: 1
       mode: global
       placement:
         constraints:
           - node.role == manager
+    depends_on:
+      - redis-node-0
+      - redis-node-1
+      - redis-node-2
+      - redis-master
     restart: always
     ports:
       - '80:80'
       - '443:443'
+      - '9000:9000'
     networks:
       - pres-tier
     volumes:
       - './configs/haproxy.cfg:/bitnami/haproxy/conf/haproxy.cfg'
       - '/var/run/docker.sock:/var/run/docker.sock'
+      - 'haproxy_data:/var/log/haproxy'
       - './errors/400.http:/etc/haproxy/errors/400.http'
       - './errors/403.http:/etc/haproxy/errors/403.http'
       - './errors/408.http:/etc/haproxy/errors/408.http'
