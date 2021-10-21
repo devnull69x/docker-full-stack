@@ -26,8 +26,8 @@ Logout from your backend and login again. This will create the necessary tables 
 | Function      | Navigational  |  Public    | Admin     | Create    | Update    | Delete
 | :------------ | :------:      | :------:   | :------:  | :------:  | :------:  | :------:
 | Robots.txt    |  :✓:          |  :o:       | :o:       | :o:       | :o:       | :o:
-| Humans.txt    |  :o:          |  :o:       | :o:       | :o:       | :o:       | :o:
-| Robot Logs    |  :o:          |  :x:       | :o:       | :x:       | :x:       | :o:
+| Humans.txt    |  :✓:          |  :o:       | :o:       | :o:       | :o:       | :o:
+| Robot Logs    |  :✓:          |  :x:       | :o:       | :x:       | :x:       | :o:
 | Agents        |  :o:          |  :x:       | :o:       | :o:       | :o:       | :o:
 | Robot Traps   |  :o:          |  :o:       | :o:       | :o:       | :o:       | :o:
 
