@@ -81,8 +81,15 @@ services:
     networks:
       - pres-tier
     volumes:
-      #- './configs/haproxy.cfg:/bitnami/haproxy/conf/haproxy.cfg'
+      - './configs/haproxy.cfg:/bitnami/haproxy/conf/haproxy.cfg'
       - '/var/run/docker.sock:/var/run/docker.sock'
+      - './errors/400.http:/etc/haproxy/errors/400.http'
+      - './errors/403.http:/etc/haproxy/errors/403.http'
+      - './errors/408.http:/etc/haproxy/errors/408.http'
+      - './errors/500.http:/etc/haproxy/errors/500.http'
+      - './errors/502.http:/etc/haproxy/errors/502.http'
+      - './errors/503.http:/etc/haproxy/errors/503.http'
+      - './errors/504.http:/etc/haproxy/errors/504.http'
 
   prometheus:
     image: docker.io/bitnami/prometheus:2-debian-10
