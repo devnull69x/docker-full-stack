@@ -1,47 +1,69 @@
 version: '3.9'
 
 services:
+
   redis-master:
-    image: docker.io/bitnami/redis:6.2-debian-10
-    deploy:
-      replicas: 1
-    ports:
-      - '6379:6379'
-    environment:
-      - ALLOW_EMPTY_PASSWORD= no
-      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
-      - REDIS_REPLICATION_MODE=master
-      - REDIS_PASSWORD= /run/secrets/redis_master_password
-      - REDIS_PORT_NUMBER=6379
-    volumes:
-      - 'redis_data:/bitnami/redis/data/'
-    networks:
-      - app-tier
-
-
-  redis-secondary:
-    image: docker.io/bitnami/redis:6.2-debian-10
+    image: docker.io/bitnami/redis-cluster:6.2-debian-10
+    container_name: redis-master
     depends_on:
-      - redis-master
+      - redis-node-0
     deploy:
       replicas: 1
-    ports:
-      - '6379:6379'
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    restart: always
     environment:
-      - ALLOW_EMPTY_PASSOWRD=no
-      - REDIS_REPLICATION_MODE=slave
-      - REDIS_MASTER_HOST=redis-master
-      - REDIS_MASTER_PORT_NUMBER=6379
-      - REDIS_MASTER_PASSWORD= /run/secrets/redis_master_password
-      - REDIS_PASSWORD= /run/secrets/redis_slave_password
-      - REDIS_REPLICA_IP=$(get_machine_ip)
-      - REDIS_REPLICA_PORT=6379
-      - REDIS_DSIABLE_COMMANDS= FLUSHDB, FLUSHALL, CONFIG
+      - 'ALLOW_EMPTY_PASSWORD=no'
+      - 'REDIS_CLUSTER_REPLICAS=1'
+      - 'REDISCLI_AUTH=bitnami'
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-master'
+      - 'REDIS_CLUSTER_CREATOR=yes'
+      - 'REDIS_DSIABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
     networks:
       - app-tier
-    secrets:
-      - redis_master_password
-      - redis_slave_password
+    volumes:
+      - 'redis_master_data:/bitnami/redis/data/'
+
+  redis-node-0:
+    image: docker.io/bitnami/redis-cluster:6.2-debian-10
+    container_name: redis-node-0
+    deploy:
+      replicas: 1
+      mode: global
+      placement:
+        constraints:
+          - node.role == worker
+    restart: always
+    environment:
+      - 'ALLOW_EMPTY_PASSWORD=no'
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis_master'
+    networks:
+      - app-tier
+    volumes:
+      - 'redis_node0_data:/bitnami/redis/data'
+
+  redis-node-1:
+    image: docker.io/bitnami/redis-cluster:6.2-debian-10
+    container_name: redis-node-1
+    deploy:
+      replicas: 1
+      mode: global
+      placement:
+        constraints:
+          - node.role == worker
+    restart: always
+    environment:
+      - 'ALLOW_EMPTY_PASSWORD=no'
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-master'
+    networks:
+      - app-tier
+    volumes:
+      - 'redis_node1_data:/bitnami/redis/data'
 
   balancer:
     image: docker.io/bitnami/haproxy:2-debian-10
@@ -59,14 +81,14 @@ services:
     networks:
       - pres-tier
     volumes:
-      - ./configs/haproxy.cfg:/bitnami/haproxy/conf/haproxy.cfg
-      - /var/run/docker.sock:/var/run/docker.sock
-      -
+      #- './configs/haproxy.cfg:/bitnami/haproxy/conf/haproxy.cfg'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+
   prometheus:
     image: docker.io/bitnami/prometheus:2-debian-10
     container_name: prometheus
     deploy:
-      repliacs: 1
+      replicas: 1
       mode: global
       placement:
         constraints:
@@ -80,7 +102,12 @@ services:
       - ./configs/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml
 
 volumes:
-    redis_data: {}
+  redis_master_data:
+    driver: local
+  redis_node0_data:
+    driver: local
+  redis_node1_data:
+    driver: local
 
 networks:
   pres-tier:
@@ -91,7 +118,9 @@ networks:
     driver: bridge
 
 secrets:
+  redis_auth_password: # echo "mysupersecretpassword" | docker secret create redis_auth_password -
+    file: ./secret/auth_password.txt
   redis_master_password: # echo "mysupersecretpassword" | docker secret create redis_master_password -
-    external: true
-  redis_slave_password: # echo "mysupersecretpassword" | docker secret create redis_slave_password -
-    external: true
+    file: ./secret/master_password.txt
+  redis_password: # echo "mysupersecretpassword" | docker secret create redis_password -
+    file: ./secret/redis_password.txt
