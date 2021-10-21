@@ -61,6 +61,23 @@ services:
     volumes:
       - ./configs/haproxy.cfg:/bitnami/haproxy/conf/haproxy.cfg
       - /var/run/docker.sock:/var/run/docker.sock
+      -
+  prometheus:
+    image: docker.io/bitnami/prometheus:2-debian-10
+    container_name: prometheus
+    deploy:
+      repliacs: 1
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    restart: always
+    ports:
+      - '10052:10052'
+    networks:
+      - pres-tier
+    volumes:
+      - ./configs/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml
 
 volumes:
     redis_data: {}
