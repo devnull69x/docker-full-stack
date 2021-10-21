@@ -2,68 +2,62 @@ version: '3.9'
 
 services:
 
-  redis-master:
-    image: docker.io/bitnami/redis-cluster:6.2-debian-10
-    container_name: redis-master
-    depends_on:
-      - redis-node-0
-    deploy:
-      replicas: 1
-      mode: global
-      placement:
-        constraints:
-          - node.role == manager
-    restart: always
-    environment:
-      - 'ALLOW_EMPTY_PASSWORD=no'
-      - 'REDIS_CLUSTER_REPLICAS=1'
-      - 'REDISCLI_AUTH=bitnami'
-      - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-master'
-      - 'REDIS_CLUSTER_CREATOR=yes'
-      - 'REDIS_DSIABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
-    networks:
-      - app-tier
-    volumes:
-      - 'redis_master_data:/bitnami/redis/data/'
-
   redis-node-0:
-    image: docker.io/bitnami/redis-cluster:6.2-debian-10
-    container_name: redis-node-0
-    deploy:
-      replicas: 1
-      mode: global
-      placement:
-        constraints:
-          - node.role == worker
-    restart: always
-    environment:
-      - 'ALLOW_EMPTY_PASSWORD=no'
-      - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis_master'
-    networks:
-      - app-tier
+    image: docker.io/bitnami/redis-cluster:6.2
     volumes:
-      - 'redis_node0_data:/bitnami/redis/data'
+      - redis-cluster_data-0:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-1:
-    image: docker.io/bitnami/redis-cluster:6.2-debian-10
-    container_name: redis-node-1
-    deploy:
-      replicas: 1
-      mode: global
-      placement:
-        constraints:
-          - node.role == worker
-    restart: always
-    environment:
-      - 'ALLOW_EMPTY_PASSWORD=no'
-      - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-master'
-    networks:
-      - app-tier
+    image: docker.io/bitnami/redis-cluster:6.2
     volumes:
-      - 'redis_node1_data:/bitnami/redis/data'
+      - redis-cluster_data-1:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-2:
+    image: docker.io/bitnami/redis-cluster:6.2
+    volumes:
+      - redis-cluster_data-2:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-3:
+    image: docker.io/bitnami/redis-cluster:6.2
+    volumes:
+      - redis-cluster_data-3:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-4:
+    image: docker.io/bitnami/redis-cluster:6.2
+    volumes:
+      - redis-cluster_data-4:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-5:
+    image: docker.io/bitnami/redis-cluster:6.2
+    volumes:
+      - redis-cluster_data-5:/bitnami/redis/data
+    depends_on:
+      - redis-node-0
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDISCLI_AUTH=bitnami'
+      - 'REDIS_CLUSTER_REPLICAS=1'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+      - 'REDIS_CLUSTER_CREATOR=yes'
 
   balancer:
     image: docker.io/bitnami/haproxy:2-debian-10
@@ -114,6 +108,18 @@ volumes:
   redis_node0_data:
     driver: local
   redis_node1_data:
+    driver: local
+  redis-cluster_data-0:
+    driver: local
+  redis-cluster_data-1:
+    driver: local
+  redis-cluster_data-2:
+    driver: local
+  redis-cluster_data-3:
+    driver: local
+  redis-cluster_data-4:
+    driver: local
+  redis-cluster_data-5:
     driver: local
 
 networks:
