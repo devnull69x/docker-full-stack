@@ -23,13 +23,13 @@ Logout from your backend and login again. This will create the necessary tables 
 - Manage navigation for devnull.cookies
 
 
-| Function      | Navigational  |  Public    | Admin     | Create    | Update    | Delete
-| :------------ | :------:      | :------:   | :------:  | :------:  | :------:  | :------:
-| Robots.txt    |  :✓:          |  :o:       | :o:       | :o:       | :o:       | :o:
-| Humans.txt    |  :✓:          |  :o:       | :o:       | :o:       | :o:       | :o:
-| Robot Logs    |  :✓:          |  :x:       | :o:       | :x:       | :x:       | :o:
-| Agents        |  :o:          |  :x:       | :o:       | :o:       | :o:       | :o:
-| Robot Traps   |  :o:          |  :o:       | :o:       | :o:       | :o:       | :o:
+| Function      | mgt/worker-server1    |  worker-server2   | 
+| :------------ | :------:              | :------:          | 
+| redis-master  |  :yes:                |  :no:       | 
+| Humans.txt    |  :✓:          |  :o:       | 
+| Robot Logs    |  :✓:          |  :x:       | 
+| Agents        |  :o:          |  :x:       | 
+| Robot Traps   |  :o:          |  :o:       | 
 
 ## TODO ##
 - Create Navigation
