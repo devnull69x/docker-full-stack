@@ -7,7 +7,7 @@ As the title says, it allows for consolidation of the modules in gerekper.asia a
 ## Installation ##
 
 #### Manual Installation ####
-Some advanced users might prefer to use manually install the plugin. This can be done using the command line. CD into your OctoberCMS project folder and paste these commands. It will execute one after another:
+lorem ippsum dolor
 ```
 cd plugins
 mkdir -p devnull/main && cd $_
@@ -15,14 +15,9 @@ git clone https://github.com/gerekper/oc-main-plugin.git ./
 composer update
 ```
 
-Logout from your backend and login again. This will create the necessary tables for the plugin to work. You have now installed Devnull.Main! Enjoy!!!
+Logout from your backend anfrakc
 
 ## Features ###
-- Manage navigation for devnull.robot
-- Manage navigation for devnull.seo
-- Manage navigation for devnull.cookies
-
-
 | Function      | mgt/worker-server1    |  worker-server2   | 
 | :------------ | :------:              | :------:          | 
 | redis-master  |  :yes:                |  :no:       | 
@@ -31,8 +26,6 @@ Logout from your backend and login again. This will create the necessary tables 
 | Agents        |  :o:          |  :x:       | 
 | Robot Traps   |  :o:          |  :o:       | 
 
-## TODO ##
-- Create Navigation
 - Consolidate all working modules
 
 ## Thanks ##
