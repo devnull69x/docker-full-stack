@@ -1,0 +1,18 @@
+---
+# ansible-playbook ansible-playbook.yml
+
+- name: run tasks on all hosts
+    hosts: "*"
+    tasks:
+        - debug: var=ansible_host
+
+- name: run pre-empt stuff on all hosts
+    hosts: debian
+    tasks:
+        apt:
+            name: install all shits
+                - dasdasda
+                - asdasdasda
+            state: present
+            update_cache: true
+        become: true

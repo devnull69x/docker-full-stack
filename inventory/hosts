@@ -1,0 +1,6 @@
+[debian]
+unison-master ansible_host=192.168.15.100
+unison-node-o ansible_host=192.168.15.101
+unison-node-1 ansible_host=192.168.15.102
+unison-node-2 ansbile_host=192.168.15.103
+unison-node-3 ansible_host=192.168.15.104
