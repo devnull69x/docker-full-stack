@@ -3,15 +3,6 @@ version: '3.9'
 # echo "mysupersecretpassword" | docker secret create redis_master_password -
 # echo "mysupersecretpassword" | docker secret create redis_password -
 
-secrets:
-
- redis_master_password:
-    external: true
-  redis_auth_password:
-    external: true
-  redis_password:
-    external: true
-
 services:
 
   redis-node-0:
@@ -164,8 +155,7 @@ services:
           memory: 256M
         reservations:
           memory: 128M
-      labels:
-        - 'caddy.encode=gzip'
+      labels: []
     networks:
       - agent-tier
     ports:
@@ -175,7 +165,6 @@ services:
     volumes:
       - portainer_data:/data
     command: -H tcp://tasks.agent:9001 --tlsskipverify
-
 
 volumes:
   haproxy_data:
@@ -199,3 +188,11 @@ networks:
   agent-tier:
     driver: overlay
     attachable: true
+
+secrets:
+  redis_master_password:
+    external: true
+  redis_auth_password:
+    external: true
+  redis_password:
+    external: true
