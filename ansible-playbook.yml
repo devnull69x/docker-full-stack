@@ -6,13 +6,13 @@
     tasks:
         - debug: var=ansible_host
 
-- name: run pre-empt stuff on all hosts
-    hosts: debian
-    tasks:
-        apt:
-            name: install all shits
-                - dasdasda
-                - asdasdasda
-            state: present
-            update_cache: true
-        become: true
+#- name: run pre-empt stuff on all hosts
+#    hosts: debian
+#    tasks:
+#        apt:
+#            name: install all shits
+#                - dasdasda
+#                - asdasdasda
+#            state: latest
+#            update_cache: true
+#        become: true
