@@ -1,10 +1,10 @@
 version: '3.9'
-
 # echo "mysupersecretpassword" | docker secret create redis_auth_password -
 # echo "mysupersecretpassword" | docker secret create redis_master_password -
 # echo "mysupersecretpassword" | docker secret create redis_password -
 
 secrets:
+
  redis_master_password:
     external: true
   redis_auth_password:
