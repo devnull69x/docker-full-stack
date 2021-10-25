@@ -1,5 +1,17 @@
 version: '3.9'
 
+# echo "mysupersecretpassword" | docker secret create redis_auth_password -
+# echo "mysupersecretpassword" | docker secret create redis_master_password -
+# echo "mysupersecretpassword" | docker secret create redis_password -
+
+secrets:
+ redis_master_password:
+    external: true
+  redis_auth_password:
+    external: true
+  redis_password:
+    external: true
+
 services:
 
   redis-node-0:
@@ -187,11 +199,3 @@ networks:
   agent-tier:
     driver: overlay
     attachable: true
-
-secrets:
-  redis_auth_password: # echo "mysupersecretpassword" | docker secret create redis_auth_password -
-    file: ./secret/auth_password.txt
-  redis_master_password: # echo "mysupersecretpassword" | docker secret create redis_master_password -
-    file: ./secret/master_password.txt
-  redis_password: # echo "mysupersecretpassword" | docker secret create redis_password -
-    file: ./secret/redis_password.txt
