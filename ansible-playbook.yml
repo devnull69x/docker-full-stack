@@ -1,7 +1,7 @@
 ---
 # ansible-playbook ansible-playbook.yml
 
-- hosts: servers
+- hosts: debian
   become: true
   become_user: root
   tasks:
