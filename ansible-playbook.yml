@@ -2,7 +2,6 @@
 # ansible-playbook ansible-playbook.yml
 
 - hosts: debian
-    remote_user: debian
     become: yes
     become-method: sudo
     tasks:
