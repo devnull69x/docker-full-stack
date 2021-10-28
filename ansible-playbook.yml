@@ -1,20 +1,12 @@
 ---
 # ansible-playbook ansible-playbook.yml
 
-- hosts: debian
-    become: yes
-    become-method: sudo
-    tasks:
-        - name: debugging shits
-          debug: var=ansible_host
+- hosts: servers
+  become: true
+  become_user: root
+  tasks:
+      - name: Update apt repo and cache on all Debian/Ubuntu boxes
+        apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
 
-#- name: run pre-empt stuff on all hosts
-#    hosts: debian
-#    tasks:
-#        apt:
-#            name: install all shits
-#                - dasdasda
-#                - asdasdasda
-#            state: latest
-#            update_cache: true
-#        become: true
+      - name: Upgrade all packages on servers
+        apt: upgrade=dist force_apt_get=yes
