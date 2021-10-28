@@ -1,10 +1,13 @@
 ---
 # ansible-playbook ansible-playbook.yml
 
-- name: run tasks on all hosts
-    hosts: all
+- hosts: debian
+    remote_user: debian
+    become: yes
+    become-method: sudo
     tasks:
-        - debug: var=ansible_host
+        - name: debugging shits
+          debug: var=ansible_host
 
 #- name: run pre-empt stuff on all hosts
 #    hosts: debian
