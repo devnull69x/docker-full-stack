@@ -10,24 +10,52 @@ services:
     volumes:
       - redis-cluster_data-0:/bitnami/redis/data
     environment:
-      - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-master'
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
 
   redis-node-1:
     image: docker.io/bitnami/redis-cluster:6.2
     volumes:
       - redis-cluster_data-1:/bitnami/redis/data
     environment:
-      - 'REDIS_PASSWORD=bitnami'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-master'
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
+
+  redis-node-2:
+    image: docker.io/bitnami/redis-cluster:6.2
+    volumes:
+      - redis-cluster_data-2:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
+
+  redis-node-3:
+    container_name: redis-node-3
+    image: docker.io/bitnami/redis-cluster:6.2
+    restart: always
+    depends_on:
+      - portainer-agent
+      - portainer
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    environment:
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
+    networks:
+      - app-tier
+    secrets:
+      - redis_auth_password
+    volumes:
+      - redis-cluster_data-3:/bitnami/redis/data
 
   redis-master:
     container_name: redis-master
     image: docker.io/bitnami/redis-cluster:6.2
     restart: always
     depends_on:
-      - redis-node-0
-      - redis-node-1
       - portainer-agent
       - portainer
     deploy:
@@ -44,7 +72,7 @@ services:
       - 'REDIS_CLUSTER_REPLICAS=1'
       - 'REDIS_CLUSTER_CREATOR=yes'
       - 'REDIS_DSIABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-master'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
     networks:
       - app-tier
     secrets:
@@ -65,6 +93,8 @@ services:
     depends_on:
       - redis-node-0
       - redis-node-1
+      - redis-node-2
+      - redis-node-3
       - redis-master
       - portainer
       - portainer-agent
@@ -113,7 +143,6 @@ services:
       replicas: 1
       placement:
         max_replicas_per_node: 1
-        constraints: [node.platform == linux]
       restart_policy:
         condition:  on-failure
         delay: 5s
@@ -139,7 +168,6 @@ services:
       placement:
         max_replicas_per_node: 1
         constraints:
-          - node.platform == linux
           - node.platform == manager
       restart_policy:
         condition: on-failure
@@ -174,6 +202,10 @@ volumes:
   redis-cluster_data-0:
     driver: local
   redis-cluster_data-1:
+    driver: local
+  redis-cluster_data-2:
+    driver: local
+  redis-cluster_data-3:
     driver: local
   portainer_data:
     driver: local
