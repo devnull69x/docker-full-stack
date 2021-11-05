@@ -1,0 +1,50 @@
+---
+# ansible-playbook -i configs/hosts playbook.yml
+
+- name: run tasks on all hosts
+  hosts: debian-test
+  tasks:
+    - name: update cache on all servers
+      apt:
+        name: "*"
+        state: latest
+        update_cache: yes
+        cache_valid_time: 3600
+        force_apt_get: yes
+      become: true
+
+    - name: upgrade all dist-packages
+      apt:
+        name: "*"
+        state: latest
+        upgrade: dist
+        cache_valid_time: 3600
+        force_apt_get: yes
+      become: true
+
+    - name: install pre-requisites
+      apt:
+        name:
+          - lalalal
+          - lalalla
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+        force_apt_get: yes
+      become: true
+
+    - name: check if reboot is needed
+      register: reboot_required_file
+      stat:
+        - path: /var/run/reboot-required
+        - get_md5: no
+
+    - name: Reboot if necessary
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: uptime
+      when: reboot_required_file.stat.exists
