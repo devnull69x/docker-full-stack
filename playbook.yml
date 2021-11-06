@@ -13,14 +13,6 @@
         cache_valid_time: 3600
         force_apt_get: yes
 
-    - name: upgrade all dist-packages
-      apt:
-        name: "*"
-        state: latest
-        upgrade: full
-        cache_valid_time: 3600
-        force_apt_get: yes
-
     - name: install pre-requisites
       apt:
         name:
