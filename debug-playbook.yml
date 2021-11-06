@@ -3,5 +3,6 @@
 
 - name: run discovery
   hosts: debian-test
+  ansible_python_interpreter: /usr/bin/python3.7
   tasks:
     - debug: var=ansible_host
