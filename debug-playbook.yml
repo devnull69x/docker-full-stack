@@ -1,0 +1,7 @@
+---
+# ansible-playbook -i configs/hosts debug-playbook.yml
+
+- name: run discovery
+  hosts: debian-test
+  tasks:
+    - debug: var=ansible_host
