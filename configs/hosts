@@ -1,7 +1,7 @@
 [all:vars]
 ansible_user = 'debian'
 ansible_become = yes
-#ansible_become_method = sudo
+ansible_become_method = sudo
 
 [debian-prod]
 unison-master  ansible_host=10.148.0.100
