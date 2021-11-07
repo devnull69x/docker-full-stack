@@ -16,7 +16,6 @@
     - name: install pre-requisites
       apt:
         name:
-          - ansible
           - docker
           - neofetch
           - nano
