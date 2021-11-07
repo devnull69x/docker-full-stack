@@ -16,6 +16,7 @@
     - name: install pre-requisites
       apt:
         name:
+          - git
           - docker
           - neofetch
           - nano
