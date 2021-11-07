@@ -56,7 +56,7 @@
           - dnsutils
           - quota
           - patch
-          - ogrotate
+          - logrotate
           - rsyslog
           - libc6-dev
           - libexpat1-dev
