@@ -20,6 +20,52 @@
           - nano
           - gcc
           - g++
+          - make
+          - flex
+          - bison
+          - openssl
+          - libssl-dev
+          - perl
+          - perl-base
+          - perl-modules
+          - libperl-dev
+          - libperl4-corelibs-perl
+          - libwww-perl
+          - libaio1
+          - libaio-dev
+          - zlib1g
+          - zlib1g-dev
+          - libcap-dev
+          - cron
+          - bzip2
+          - zip
+          - automake
+          - autoconf
+          - libtool
+          - cmake
+          - pkg-config
+          - python
+          - libdb-dev
+          - libsasl2-dev
+          - libncurses5
+          - libncurses5-dev
+          - libsystemd-dev
+          - bind9
+          - dnsutils
+          - quota
+          - patch
+          - ogrotate
+          - rsyslog
+          - libc6-dev
+          - libexpat1-dev
+          - libcrypt-openssl-rsa-perl
+          - libnuma-dev
+          - libnuma1
+          - curl
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - apt-utils
         state: present
         update_cache: true
         cache_valid_time: 3600
@@ -34,19 +80,12 @@
         path: /var/run/reboot-required
       register: reboot_required_file
 
-    # In a normal play, the pause action is only executed once, not once-per-host.
-    # In this case, we really want to force the once-per-host thing.
-    # ref http://stackoverflow.com/a/35169496
     - name: Prompt for rebooting
       pause:
         prompt: "Press ENTER to reboot {{ item }} now, or Ctrl+C to abort."
-      # We need to check for the existence of 'reboot_required_file' first because play_hosts also
-      # include hosts that have failed. When a host has failed, it stops executing and thus doesn't
-      # have 'reboot_required_file'. And if we try to access 'stat', boom! failure. We don't want that.
       when: "'reboot_required_file' in hostvars[item] and hostvars[item]['reboot_required_file'].stat.exists"
       with_items: "{{ play_hosts }}"
 
-    # ref https://support.ansible.com/hc/en-us/articles/201958037-Reboot-a-server-and-wait-for-it-to-come-back
     - name: Rebooting machine
       shell: sleep 2 && shutdown -r now "Ansible updates triggered"
       async: 1
