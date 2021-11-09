@@ -2,7 +2,7 @@
 ansible_user = 'debian'
 ansible_become = yes
 ansible_become_method = sudo
-ansible_python_interpreter = /usr/bin/python3.7
+ansible_python_interpreter = /usr/bin/python3.9
 
 [debian-prod]
 unison-master  ansible_host=10.148.0.100
