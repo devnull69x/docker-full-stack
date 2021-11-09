@@ -5,6 +5,16 @@
   hosts: debian-test
   become: true
   tasks:
+    - name: Add Apt signing key from official docker repo
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: add docker official repository for Debian Stretch
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+        state: present
+
     - name: update cache on all servers
       apt:
         name: "*"
@@ -17,7 +27,9 @@
       apt:
         name:
           - git
-          - docker
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
           - neofetch
           - nano
           - gcc
@@ -68,6 +80,7 @@
           - ca-certificates
           - gnupg
           - apt-utils
+          - lsb-release
         state: present
         update_cache: true
         cache_valid_time: 3600
