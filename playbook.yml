@@ -2,7 +2,7 @@
 # ansible-playbook -i configs/hosts playbook.yml
 
 - name: run tasks on all hosts
-  hosts: debian-test
+  hosts: debian-prod
   become: true
   tasks:
     - name: Add Apt signing key from official docker repo
