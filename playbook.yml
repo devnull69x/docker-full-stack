@@ -10,9 +10,19 @@
         url: https://download.docker.com/linux/debian/gpg
         state: present
 
+    - name: Add Apt signing key from gluster repo
+      apt_key:
+        url: 'https://download.gluster.org/pub/gluster/glusterfs/{{ glusterfs_gpg_key_version }}/rsa.pub'
+        state: present
+
     - name: add docker official repository for Debian Stretch
       apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+        repo: deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable
+        state: present
+
+    - name: add glusterfs offical repository for Debian Bullseye
+      apt_repository:
+        repo: deb [arch=amd64] https://download.gluster.org/pub/gluster/glusterfs/10/LATEST/Debian/bullseye/amd64/apt bullseye main
         state: present
 
     - name: update cache on all servers
@@ -26,6 +36,8 @@
     - name: install pre-requisites
       apt:
         name:
+          - glusterfs-server
+          - glusterfs-client
           - git
           - docker-ce
           - docker-ce-cli
@@ -79,6 +91,7 @@
           - apt-transport-https
           - ca-certificates
           - gnupg
+          - gnupg2
           - apt-utils
           - lsb-release
         state: present
