@@ -36,12 +36,11 @@
     - name: install pre-requisites
       apt:
         name:
+          - software-properties-common
           - glusterfs-server
           - glusterfs-client
           - git
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
+          - docker.io
           - neofetch
           - nano
           - gcc
