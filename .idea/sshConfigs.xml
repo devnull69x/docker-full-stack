@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="localhost" id="e67e12c2-2f90-4786-a96c-4cc369816afe" keyPath="C:\Users\devnull69\.ssh\google_compute_engine" localPort="22" port="22" customName="debian@unison-master" nameFormat="CUSTOM" username="debian">
+        <option name="customName" value="debian@unison-master" />
+      </sshConfig>
+    </configs>
+  </component>
+</project>
