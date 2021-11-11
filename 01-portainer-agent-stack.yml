@@ -23,11 +23,6 @@ services:
       placement:
         max_replicas_per_node: 1
         constraints: [node.labels.name == unison-master]
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 60s
       update_config:
         parallelism: 1
         delay: 5s
