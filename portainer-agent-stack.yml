@@ -9,15 +9,6 @@ services:
     restart: always
     deploy:
       mode: global
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 60s
-      update_config:
-        parallelism: 1
-        delay: 5s
-        order: stop-first
     networks:
       - agent_network
     volumes:
