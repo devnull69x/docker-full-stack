@@ -22,7 +22,7 @@ services:
         constraints: [ node.platform.os == linux ]
 
   portainer:
-    image: portainer/portainer:latest
+    image: portainer/portainer-ce:latest
     deploy:
       mode: replicated
       replicas: 1
