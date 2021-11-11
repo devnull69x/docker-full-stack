@@ -6,7 +6,6 @@ services:
 
   agent:
     image: portainer/agent:2.10.0-alpine
-    restart: always
     deploy:
       mode: global
     networks:
