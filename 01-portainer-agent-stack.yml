@@ -41,15 +41,15 @@ services:
     networks:
       - agent_network
     ports:
-      - "9443:9443"
+      - "10053:9443"
       - "9000:9000"
-      - "8000:8000"
+      #- "8000:8000"
     volumes:
       - /mnt/portainer_data:/data
-    command: -H tcp://tasks.agent:9001 --tlsskipverify #--sslcert /run/secrets/ganjaking.cloud.sslcert --sslkey /run/secrets/ganjaking.cloud.sslkey
+    command: -H tcp://tasks.agent:9001 --tlsskipverify --sslcert /run/secrets/ganjaking.cloud.sslcert --sslkey /run/secrets/ganjaking.cloud.sslkey
     #secrets:
-      #- ganjaking.cloud.sslcert
-      #- ganjaking.cloud.sslkey
+      - ganjaking.cloud.sslcert
+      - ganjaking.cloud.sslkey
 
 networks:
   agent_network:
