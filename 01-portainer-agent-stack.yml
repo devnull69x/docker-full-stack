@@ -42,7 +42,7 @@ services:
       - agent_network
     ports:
       - "10053:9443"
-      - "9000:9000"
+      #- "9000:9000"
       #- "8000:8000"
     volumes:
       - /mnt/portainer_data:/data
