@@ -29,7 +29,7 @@ services:
       placement:
         constraints: [node.labels.name == unison-master]
     networks:
-      - agent_network
+      - portainer_agent
     ports:
       - "10053:9443"
       - "9000:9000"
