@@ -71,7 +71,7 @@ services:
       - 'REDIS_PASSWORD=/run/secrets/redis_password'
       - 'REDIS_CLUSTER_REPLICAS=1'
       - 'REDIS_CLUSTER_CREATOR=yes'
-      - 'REDIS_DSIABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
+      - 'REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
     networks:
       - app-tier

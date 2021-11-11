@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  #created-in: portainer
+  logrotate:
+    image: blacklabelops/logrotate:latest
+    deploy:
+      mode: global
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+      restart-policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+    security_opt:
+      - no-new-privileges: true
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - /var/log/docker:/var/log/docker
+      - /mnt/logrotate_data:/logs
+      - TZ=Asia/Singapore
+    environment:
+      - LOGS_DIRECTORIES=/var/lib/docker/containers /var/log/docker
+      - LOGROTATE_INTERVAL=weekly
+      - LOGROTATE_STATUSFILE=/logs/logrotate.status
+      - LOG_FILE_ENDINGS=log json xml
+      - LOGROTATE_SIZE=30M
+      - LOGROTATE_COPIES=2
+      - LOGROTATE_COMPRESSION=compress
+      - LOGROTATE_OLDDIR=/logs
+      - LOGROTATE_LOGFILE=/logs/logrotatecron.log
+      - LOGROTATE_PARAMETERS=vf
+      - LOGROTATE_MAXAGE=60
+      - LOGROTATE_MINSIZE=100k
+      #      - LOGROTATE_CRONSCHEDULE=* * * * * *
+
+volumes:
+  logrotate_data:
+    driver: local
