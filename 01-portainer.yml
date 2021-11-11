@@ -2,22 +2,6 @@ version: '3.8'
   #docker secret create ganjaking.cloud.sslcert /mnt/certs/ganjaking.cloud.sslcert
   #docker secret create ganjaking.cloud.sslkey /mnt/certs/ganjaking.cloud.sslkey
   #docker secret create ganjaking.cloud.cacert /mnt/certs/ganjaking.cloud.cacert
-
-networks:
-  agent_network:
-    driver: overlay
-    attachable: true
-
-volumes:
-  portainer_data:
-    driver: local
-
-secrets:
-  ganjaking.cloud.sslcert:
-    external: true
-  ganjaking.cloud.sslkey:
-    external: true
-
 services:
 
   agent:
@@ -72,3 +56,18 @@ services:
       volumes:
         - portainer_data:/data
       command: -H tcp://tasks.agent:9001 --tlsskipverify --sslcert /run/secrets/ganjaking.cloud.sslcert --sslkey /run/secrets/ganjaking.cloud.sslkey
+
+  networks:
+    agent_network:
+      driver: overlay
+      attachable: true
+
+  volumes:
+    portainer_data:
+      driver: local
+
+  secrets:
+    ganjaking.cloud.sslcert:
+      external: true
+    ganjaking.cloud.sslkey:
+      external: true
