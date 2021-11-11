@@ -22,22 +22,7 @@ services:
         mode: replicated
         replicas: 1
         placement:
-          max_replicas_per_node: 1
           constraints: [node.role == manager]
-        restart_policy:
-          condition: on-failure
-          delay: 5s
-          max_attempts: 3
-          window: 60s
-        update_config:
-          parallelism: 1
-          delay: 5s
-          order: stop-first
-        resources:
-          limits:
-            memory: 256M
-          reservations:
-            memory: 128M
       networks:
         - agent_network
       ports:
