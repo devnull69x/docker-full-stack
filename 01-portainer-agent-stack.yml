@@ -41,7 +41,7 @@ services:
     networks:
       - agent_network
     ports:
-      - "9443:9443"
+      - "10053:9443"
       - "9000:9000"
       - "8000:8000"
     volumes:
