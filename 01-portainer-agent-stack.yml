@@ -12,7 +12,7 @@ services:
       - agent_network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /mnt:/var/lib/docker/volumes
+      - /mnt/volumes:/var/lib/docker/volumes
 
   portainer:
     image: portainer/portainer-ce:2.9.2
