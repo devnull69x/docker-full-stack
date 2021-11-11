@@ -17,7 +17,6 @@ services:
 
   portainer:
     image: portainer/portainer-ce:2.9.2
-    restart: always
     deploy:
       mode: replicated
       replicas: 2
