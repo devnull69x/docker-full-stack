@@ -8,7 +8,8 @@ services:
       mode: replicated
       replicas: 1
       placement:
-        constraints: [node.labels.name == unison-master]
+        #constraints: [node.labels.name == unison-master]
+        constraints: [node.role == manager]
     networks:
       - portainer_agent
     ports:
