@@ -5,7 +5,7 @@ version: '3.8'
 services:
 
   agent:
-    image: portainer/agent:2.10.0-alpine
+    image: portainer/agent:2.10.0
     deploy:
       mode: global
     networks:
@@ -40,7 +40,7 @@ services:
       - agent_network
     ports:
       - "10053:9443"
-      #- "9000:9000"
+      - "9000:9000"
       #- "8000:8000"
     volumes:
       - /mnt/portainer_data:/data
