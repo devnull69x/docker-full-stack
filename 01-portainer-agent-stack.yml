@@ -6,6 +6,7 @@ services:
 
   agent:
     image: portainer/agent:2.10.0-alpine
+    restart: always
     deploy:
       mode: global
     networks:
@@ -14,26 +15,41 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /mnt:/var/lib/docker/volumes
 
-    portainer:
-      image: portainer/portainer-ce:2.9.2
-      restart: always
-      deploy:
-        mode: replicated
-        replicas: 1
-        placement:
-          constraints: [node.role == manager]
-      networks:
-        - agent_network
-      ports:
-        - "10053:9443"
-        - "9000:9000"
-        - "8000:8000"
-      volumes:
-        - /mnt/portainer_data:/data
-      command: -H tcp://tasks.agent:9001 --tlsskipverify --sslcert /run/secrets/ganjaking.cloud.sslcert --sslkey /run/secrets/ganjaking.cloud.sslkey
-      secrets:
-        - ganjaking.cloud.sslcert
-        - ganjaking.cloud.sslkey
+  portainer:
+    image: portainer/portainer-ce:2.9.2
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: stop-first
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - agent_network
+    ports:
+      - "10053:9443"
+      - "9000:9000"
+      - "8000:8000"
+    volumes:
+      - /mnt/portainer_data:/data
+    command: -H tcp://tasks.agent:9001 --tlsskipverify --sslcert /run/secrets/ganjaking.cloud.sslcert --sslkey /run/secrets/ganjaking.cloud.sslkey
+    secrets:
+      - ganjaking.cloud.sslcert
+      - ganjaking.cloud.sslkey
 
 networks:
   agent_network:
