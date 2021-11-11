@@ -36,7 +36,7 @@ services:
       #- "8000:8000"
     volumes:
       - /mnt/portainer_data:/data
-    command: -H tcp://tasks.agent:9001 --tlsskipverify
+      - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
   portainer_agent:
