@@ -1,0 +1,28 @@
+version : "3.8"
+
+services:
+  #created-in: portainer
+  dockergc:
+    image: clockworksoul/docker-gc-cron:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-master]
+      restart_policy:
+        condition: on-failure
+    security_opt:
+      - no-new-privileges: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /mnt/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude
+    environment:
+      - CRON=0 1 * * *
+      - FORCE_IMAGE_REMOVAL=1
+      - FORCE_CONTAINER_REMOVAL=1
+      - MINIMUM_IMAGES_TO_SAVE=1
+      - GRACE_PERIOD_SECONDS=3600
+      - DRY_RUN=0
+      - CLEAN_UP_VOLUMES=1
+      - TZ=Asia/Singapore
+
