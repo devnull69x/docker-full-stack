@@ -13,6 +13,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /mnt/volumes:/var/lib/docker/volumes
+    ports:
+      - target: "9001"
+        published: "9001"
+        protocol: tcp
+        mode: host
 
   portainer:
     image: portainer/portainer-ce:2.9.2
