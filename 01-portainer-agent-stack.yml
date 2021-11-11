@@ -19,10 +19,10 @@ services:
     image: portainer/portainer-ce:2.9.2
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: 1
       placement:
         max_replicas_per_node: 1
-        constraints: [node.role == manager]
+        constraints: [node.labels.name == unison-master]
       restart_policy:
         condition: on-failure
         delay: 5s
