@@ -10,15 +10,8 @@ services:
       placement:
         constraints: [node.labels.name == unison-master]
         #constraints: [node.role == manager]
-    networks:
-      - portainer_agent
     ports:
       - "10053:9443"
     volumes:
       - /mnt/portainer_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
-
-networks:
-  portainer_agent:
-    driver: overlay
-    attachable: true
