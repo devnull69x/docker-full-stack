@@ -22,9 +22,9 @@ services:
       - TZ=Asia/Singapore
     environment:
       - LOGS_DIRECTORIES=/var/lib/docker/containers /var/log/docker
+      - LOG_FILE_ENDINGS=log json xml
       - LOGROTATE_INTERVAL=weekly
       - LOGROTATE_STATUSFILE=/logs/logrotate.status
-      - LOG_FILE_ENDINGS=log json xml
       - LOGROTATE_SIZE=30M
       - LOGROTATE_COPIES=2
       - LOGROTATE_COMPRESSION=compress
@@ -33,7 +33,7 @@ services:
       - LOGROTATE_PARAMETERS=vf
       - LOGROTATE_MAXAGE=60
       - LOGROTATE_MINSIZE=100k
-      #      - LOGROTATE_CRONSCHEDULE=* * * * * *
+      #- LOGROTATE_CRONSCHEDULE=* * * * * *
 
 volumes:
   logrotate_data:
