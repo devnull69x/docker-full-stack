@@ -6,15 +6,10 @@ services:
     image: clockworksoul/docker-gc-cron:latest
     deploy:
       mode: global
-      replicas: 1
       placement:
         max_replicas_per_node: 1
-      restart-policy:
-        condition: on-failure
       update_config:
         parallelism: 1
-    security_opt:
-      - no-new-privileges: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /mnt/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude
@@ -27,3 +22,10 @@ services:
       - DRY_RUN=0
       - CLEAN_UP_VOLUMES=1
       - TZ=Asia/Singapore
+    networks:
+      - portainer_default
+
+networks:
+  portainer_default:
+    driver: overlay
+    attachable: true

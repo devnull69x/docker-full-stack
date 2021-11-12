@@ -15,3 +15,10 @@ services:
     volumes:
       - /mnt/portainer_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - portainer_default
+
+networks:
+  portainer_default:
+    driver: overlay
+    attachable: true

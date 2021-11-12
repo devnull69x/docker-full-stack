@@ -6,20 +6,14 @@ services:
     image: blacklabelops/logrotate:latest
     deploy:
       mode: global
-      replicas: 1
       placement:
         max_replicas_per_node: 1
-      restart-policy:
-        condition: on-failure
       update_config:
         parallelism: 1
-    security_opt:
-      - no-new-privileges: true
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers
-      - /var/log/docker:/var/log/docker
+      - /var/log/messages:/var/log/messages
       - /mnt/logrotate_data:/logs
-      - TZ=Asia/Singapore
     environment:
       - LOGS_DIRECTORIES=/var/lib/docker/containers /var/log/docker
       - LOG_FILE_ENDINGS=log json xml
@@ -33,8 +27,10 @@ services:
       - LOGROTATE_PARAMETERS=vf
       - LOGROTATE_MAXAGE=60
       - LOGROTATE_MINSIZE=100k
+      - TZ=Asia/Singapore
       #- LOGROTATE_CRONSCHEDULE=* * * * * *
 
-volumes:
-  logrotate_data:
-    driver: local
+networks:
+  portainer_default:
+    driver: overlay
+    attachable: true
