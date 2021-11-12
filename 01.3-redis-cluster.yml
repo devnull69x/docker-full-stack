@@ -1,0 +1,81 @@
+version: '3.8'
+services:
+  #created-in: portainer
+  redis-node-0:
+    image: docker.io/bitnami/redis-cluster:6.2
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-node-0]
+        max_replicas_per_node: 1
+    volumes:
+      - /mnt/redis-cluster_data-0:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
+
+  redis-node-1:
+    image: docker.io/bitnami/redis-cluster:6.2
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-node-1]
+        max_replicas_per_node: 1
+    volumes:
+      - /mnt/redis-cluster_data-1:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
+
+  redis-node-2:
+    image: docker.io/bitnami/redis-cluster:6.2
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-node-2]
+        max_replicas_per_node: 1
+    volumes:
+      - /mnt/redis-cluster_data-2:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
+
+  redis-node-3:
+    image: docker.io/bitnami/redis-cluster:6.2
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-node-3]
+        max_replicas_per_node: 1
+    volumes:
+      - /mnt/redis-cluster_data-3:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
+
+  redis-master:
+    image: docker.io/bitnami/redis-cluster:6.2
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-master]
+        max_replicas_per_node: 1
+    volumes:
+      - /mnt/redis_cluster_data_master:/bitnami/redis/data:rw
+    depends_on:
+      - redis-node-0
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+    environment:
+      - 'REDIS_PASSWORD=/run/secrets/redis_password'
+      - 'REDISCLI_AUTH=/run/secrets/redis_auth_password'
+      - 'REDIS_CLUSTER_REPLICAS=1'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-master'
+      - 'REDIS_CLUSTER_CREATOR=yes'
+      - 'REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
