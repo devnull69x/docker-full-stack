@@ -36,6 +36,7 @@
     - name: install pre-requisites
       apt:
         name:
+          - wget
           - software-properties-common
           - glusterfs-server
           - glusterfs-client
