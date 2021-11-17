@@ -23,7 +23,7 @@ unison-node-2   ansible_host=10.148.0.103 ansible_user = 'debian'
 unison-node-3   ansible_host=10.148.0.104 ansible_user = 'debian'
 
 [alpine-test]
-unison-master   ansible_host=10.148.0.100 ansible_user = 'alpine'
-unison-node-0   ansible_host=10.148.0.101 ansible_user = 'alpine'
-unison-node-1   ansible_host=10.148.0.102 ansible_user = 'alpine'
-unison-node-2   ansible_host=10.148.0.103 ansible_user = 'alpine'
+unison-master   ansible_host=10.148.0.100
+unison-node-0   ansible_host=10.148.0.101
+unison-node-1   ansible_host=10.148.0.102
+unison-node-2   ansible_host=10.148.0.103
