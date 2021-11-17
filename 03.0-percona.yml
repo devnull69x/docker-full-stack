@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  #created-in: portainer
+  galera_etcd:
+    image: quay.io/coreos/etcd:3.5.1
+    command: etcd
+    deploy:
+      mode: replicated
+      replicas: 1
+    update_config:
+      parallelism: 1
+    placements:
+      constraints: [node.labels.name == unison-master]
+    volumes:
+      - /usr/share/ca-certificates/:/etc/ssl/certs
+    environment:
+      - "ETCD_DATA_DIR=/opt/etcd/data"
+      - "ETCD_NAME=etcd-node-01"
+      - "ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379,http://0.0.0.0:4001"
+      - "ETCD_ADVERTISE_CLIENT_URLS=http://galera_etcd:2379,http://galera_etcd:4001"
+      - "ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380"
+      - "ETCD_INITIAL_ADVERTISE_PEER_URLS=http://galera_etcd:2380"
+      - "ETCD-INITIAL-CLUSTER=etcd0=http://galera_etcd:2380"
+      - "ETCD_INITIAL_CLUSTER_STATE=new"
+      - "ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster-1"
+
+  proxysql:
+    image: perconalab/proxysql:2.3.2
+    networks:
+      - galera
+      - public
+    ports:
+      - "3306:3306"
+      - "6032:6032"
+    deploy:
+      mode: replicated
+      replicas: 1
+    update_config:
+      parallelism: 1
+    placements:
+      constraints: [node.labels.name == unison-master]
+    enviornment:
+      - "CLUSTER_NAME=galera-cluster"
+      - "ETCD_HOST=galera_etcd"
+      - "DISCOVERY_SERVICE=galera_etcd:3379"
+      - "MYSQL_ROOT_PASSWORD=/run/secret/mysql_root_password"
+      - "MYSQL_PROXY_USER=/run/secret/mysql_proxy_user"
+      - "MYSQL_PROXY_PASSWORD=/run/secret/mysql_proxy_password"
+
+
+networks:
+  public:
+  galera:
+    driver: overlay
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.148.2.0/24
+
+secrets:
+  MYSQL_ROOT_PASSWORD:
+    external: true
+  MYSQL_PROXY_USER:
+    external: true
+  MYSQL_PROXY_PASSWORD:
+    external: true
