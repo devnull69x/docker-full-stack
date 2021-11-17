@@ -4,7 +4,7 @@ not tested yet
 ## What is it ##
 As the title says, it allows for consolidation of the modules in docker full stack arsenal
 
-## Create Google Cloud Compute Sh8s ##
+## Create Google Cloud Compute Alpine ##
 
 #### create your own alpine ####
 ```
