@@ -1,10 +1,8 @@
 [all:vars]
-#ansible_user = 'debian'
 ansible_user = 'alpine'
 ansible_become = yes
 ansible_become_method = sudo
 ansible_python_interpreter = /usr/bin/python3
-#ansible_python_interpreter = /usr/bin/python3.9
 glusterfs_gpg_key_version = '10'
 glusterfs_deb_version = 'LATEST'
 
