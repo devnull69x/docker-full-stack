@@ -5,6 +5,10 @@ ansible_python_interpreter = /usr/bin/python3
 glusterfs_gpg_key_version = '10'
 glusterfs_deb_version = 'LATEST'
 
+[alpine-test:vars]
+ansible_user = 'alpine'
+ansible_python_interpreter = /usr/bin/python3
+
 [debian-prod]
 unison-master  ansible_host=10.148.0.100
 unison-node-0  ansible_host=10.148.0.101
@@ -19,9 +23,7 @@ unison-node-1   ansible_host=10.148.0.102
 unison-node-2   ansible_host=10.148.0.103
 unison-node-3   ansible_host=10.148.0.104
 
-[alpine-test:vars]
-ansible_user = 'alpine'
-ansible_python_interpreter = /usr/bin/python3
+[alpine-test]
 unison-master   ansible_host=10.148.0.100
 unison-node-0   ansible_host=10.148.0.101
 unison-node-1   ansible_host=10.148.0.102
