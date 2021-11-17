@@ -1,5 +1,4 @@
 [all:vars]
-ansible_user = 'alpine'
 ansible_become = yes
 ansible_become_method = sudo
 ansible_python_interpreter = /usr/bin/python3
@@ -21,6 +20,7 @@ unison-node-2   ansible_host=10.148.0.103
 unison-node-3   ansible_host=10.148.0.104
 
 [alpine-test:vars]
+ansible_user = 'alpine'
 ansible_python_interpreter = /usr/bin/python3
 unison-master   ansible_host=10.148.0.100
 unison-node-0   ansible_host=10.148.0.101
