@@ -12,7 +12,7 @@ services:
         parallelism: 1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /mnt/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude
+      - /opt/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude
     environment:
       - CRON=59 23 * * 6
       - FORCE_IMAGE_REMOVAL=1
@@ -22,3 +22,5 @@ services:
       - DRY_RUN=0
       - CLEAN_UP_VOLUMES=1
       - TZ=Asia/Singapore
+    labels:
+      - "deunhealth.restart.on.unhealthy=true"
