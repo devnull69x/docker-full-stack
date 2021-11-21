@@ -1,9 +1,11 @@
 [all:vars]
 ansible_become = yes
 ansible_become_method = sudo
+ansible_sudo_pass = "93220809"
 ansible_python_interpreter = /usr/bin/python3
 glusterfs_gpg_key_version = '10'
 glusterfs_deb_version = 'LATEST'
+
 
 [alpine-test:vars]
 ansible_user = 'alpine'
