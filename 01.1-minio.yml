@@ -1,52 +1,100 @@
 version: '3.8'
 
 services:
-  minio:
-    image: docker.io/bitnami/minio:2021
-    ports:
-      - 9000:9000
-      - 9001:9001
+  prepare-data:
+    image: 'docker.io/bitnami/bitnami-shell:latest'
+    command:
+      - /bin/bash
+      - -ec
+      - |
+        chmod -R g+rwX /data
     volumes:
-      - 'minio_data:/data'
-    environment:
-      - MINIO_ROOT_USER=minio
-      - MINIO_ROOT_PASSWORD=miniosecret
-      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
-      - MINIO_DISTRIBUTED_NODES=minio,minio2,minio3,minio4
-  minio2:
-    image: docker.io/bitnami/minio:2021
-    volumes:
-      - 'minio_2_data:/data'
-    environment:
-      - MINIO_ROOT_USER=minio
-      - MINIO_ROOT_PASSWORD=miniosecret
-      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
-      - MINIO_DISTRIBUTED_NODES=minio,minio2,minio3,minio4
-  minio3:
-    image: docker.io/bitnami/minio:2021
-    volumes:
-      - 'minio_3_data:/data'
-    environment:
-      - MINIO_ROOT_USER=minio
-      - MINIO_ROOT_PASSWORD=miniosecret
-      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
-      - MINIO_DISTRIBUTED_NODES=minio,minio2,minio3,minio4
-  minio4:
-    image: docker.io/bitnami/minio:2021
-    volumes:
-      - 'minio_4_data:/data'
-    environment:
-      - MINIO_ROOT_USER=minio
-      - MINIO_ROOT_PASSWORD=miniosecret
-      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
-      - MINIO_DISTRIBUTED_NODES=minio,minio2,minio3,minio4
+      - '/opt:/data'
 
-volumes:
-  minio_data:
-    driver: local
-  minio_2_data:
-    driver: local
-  minio_3_data:
-    driver: local
-  minio_4_data:
-    driver: local
+  node-master:
+    image: docker.io/bitnami/minio:2021
+    user: '1000:1000'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-master]
+      update-config:
+        parallelism: 1
+    volumes:
+      - '/opt:/data'
+    environment:
+      - MINIO_ROOT_USER=/run/secrets/MINIO_ROOT_USER
+      - MINIO_ROOT_PASSWORD=/run/secrets/MINIO_ROOT_PASSWORD
+      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
+      - MINIO_DISTRIBUTED_NODES=node-master,node-0,node-1,node-2
+    labels:
+      - "deunhealth.restart.on.unhealthy=true"
+    depends_on:
+      - prepare-data
+
+  node-0:
+    user: '1000:1000'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-0 ]
+      update-config:
+        parallelism: 1
+    volumes:
+      - '/opt:/data'
+    environment:
+      - MINIO_ROOT_USER=/run/secrets/MINIO_ROOT_USER
+      - MINIO_ROOT_PASSWORD=/run/secrets/MINIO_ROOT_PASSWORD
+      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
+      - MINIO_DISTRIBUTED_NODES=node-master,node-0,node-1,node-2
+    labels:
+      - "deunhealth.restart.on.unhealthy=true"
+    depends_on:
+      - prepare-data
+
+  node-1:
+    user: '1000:1000'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-1 ]
+      update-config:
+        parallelism: 1
+    volumes:
+      - '/opt:/data'
+    environment:
+      - MINIO_ROOT_USER=/run/secrets/MINIO_ROOT_USER
+      - MINIO_ROOT_PASSWORD=/run/secrets/MINIO_ROOT_PASSWORD
+      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
+      - MINIO_DISTRIBUTED_NODES=node-master,node-0,node-1,node-2
+    labels:
+      - "deunhealth.restart.on.unhealthy=true"
+    depends_on:
+      - prepare-data
+
+  node-2:
+    user: '1000:1000'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-2 ]
+      update-config:
+        parallelism: 1
+    volumes:
+      - '/opt:/data'
+    environment:
+      - MINIO_ROOT_USER=/run/secrets/MINIO_ROOT_USER
+      - MINIO_ROOT_PASSWORD=/run/secrets/MINIO_ROOT_PASSWORD
+      - MINIO_DISTRIBUTED_MODE_ENABLED=yes
+      - MINIO_DISTRIBUTED_NODES=node-master,node-0,node-1,node-2
+    labels:
+      - "deunhealth.restart.on.unhealthy=true"
+    depends_on:
+      - prepare-data
