@@ -15,3 +15,5 @@ services:
       - TZ=Asia/Singapore
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "deunhealth.restart.on.unhealthy=true"
