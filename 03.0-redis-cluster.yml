@@ -2,7 +2,7 @@ version: '3.8'
 services:
   #created-in: portainer
   redis-node-0:
-    image: docker.io/bitnami/redis-cluster:6.2
+    image: docker.io/bitnami/redis-cluster:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -18,7 +18,7 @@ services:
       - "deunhealth.restart.on.unhealthy=true"
 
   redis-node-1:
-    image: docker.io/bitnami/redis-cluster:6.2
+    image: docker.io/bitnami/redis-cluster:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -34,7 +34,7 @@ services:
       - "deunhealth.restart.on.unhealthy=true"
 
   redis-node-2:
-    image: docker.io/bitnami/redis-cluster:6.2
+    image: docker.io/bitnami/redis-cluster:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -50,7 +50,7 @@ services:
       - "deunhealth.restart.on.unhealthy=true"
 
   redis-master:
-    image: docker.io/bitnami/redis-cluster:6.2
+    image: docker.io/bitnami/redis-cluster:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -72,3 +72,13 @@ services:
       - 'REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
     labels:
       - "deunhealth.restart.on.unhealthy=true"
+
+volumes:
+  redis_cluster_data_master:
+    driver: local
+  redis-cluster_data-0:
+    driver: local
+  redis-cluster_data-1:
+    driver: local
+  redis-cluster_data-2:
+    driver: local

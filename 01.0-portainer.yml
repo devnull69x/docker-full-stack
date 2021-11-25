@@ -3,7 +3,8 @@ version: '3.8'
 services:
   #created-in: docker stack deploy -c 01.0-portainer.yml portainer
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ee:latest
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
     deploy:
       mode: replicated
       replicas: 1

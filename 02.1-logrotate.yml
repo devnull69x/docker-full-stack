@@ -13,8 +13,7 @@ services:
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers
       - /var/log/messages:/var/log/messages
-      - /opt/logrotate_data:/logs
-      - /opt/logrotate_data/logrotate-status:/logrotate-status
+      - logrotate_data:/logs
     environment:
       - LOGS_DIRECTORIES=/var/lib/docker/containers /var/log/docker
       - LOG_FILE_ENDINGS=log json xml
@@ -32,3 +31,7 @@ services:
       #- LOGROTATE_CRONSCHEDULE=* * * * * *
     labels:
       - "deunhealth.restart.on.unhealthy=true"
+
+volumes:
+  logrotate_data:
+    driver: local
