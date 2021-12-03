@@ -16,6 +16,9 @@ services:
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
     labels:
       - "deunhealth.restart.on.unhealthy=true"
+    secrets:
+      - redis_password
+
 
   redis-node-1:
     image: docker.io/bitnami/redis-cluster:latest
@@ -32,6 +35,8 @@ services:
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
     labels:
       - "deunhealth.restart.on.unhealthy=true"
+    secrets:
+      - redis_password
 
   redis-node-2:
     image: docker.io/bitnami/redis-cluster:latest
@@ -48,6 +53,8 @@ services:
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
     labels:
       - "deunhealth.restart.on.unhealthy=true"
+    secrets:
+      - redis_password
 
   redis-master:
     image: docker.io/bitnami/redis-cluster:latest
@@ -72,13 +79,30 @@ services:
       - 'REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
     labels:
       - "deunhealth.restart.on.unhealthy=true"
+    secrets:
+      - redis_password
+      - redis_auth_password
 
 volumes:
   redis_cluster_data_master:
-    driver: local
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/redis_cluster_data_master
   redis-cluster_data-0:
-    driver: local
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/redis-cluster_data-0
   redis-cluster_data-1:
-    driver: local
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/redis-cluster_data-1
   redis-cluster_data-2:
-    driver: local
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/redis-cluster_data-2
+
+secrets:
+  redis_password:
+    external: true
+  redis_auth_password:
+    external: true

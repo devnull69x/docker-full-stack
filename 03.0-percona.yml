@@ -3,61 +3,83 @@ version: "3.8"
 services:
   #created-in: portainer
   galera_etcd:
-    image: quay.io/coreos/etcd:3.5.1
+    image: quay.io/coreos/etcd:latest
     command: etcd
     deploy:
       mode: replicated
       replicas: 1
-    update_config:
-      parallelism: 1
-    placements:
-      constraints: [node.labels.name == unison-master]
+      placement:
+        constraints: [node.labels.name == unison-master]
+        max_replicas_per_node: 1
+    networks:
+      - galera
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+      - "4001:4001"
     volumes:
       - /usr/share/ca-certificates/:/etc/ssl/certs
     environment:
-      - "ETCD_DATA_DIR=/opt/etcd/data"
+      - "ETCD_DATA_DIR=/var/lib/docker/volumes/etc_data/"
       - "ETCD_NAME=etcd-node-01"
       - "ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379,http://0.0.0.0:4001"
-      - "ETCD_ADVERTISE_CLIENT_URLS=http://galera_etcd:2379,http://galera_etcd:4001"
+      - "ETCD_ADVERTISE_CLIENT_URLS=http://pxc_galera_etcd:2379,http://pxc_galera_etcd:4001"
       - "ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380"
-      - "ETCD_INITIAL_ADVERTISE_PEER_URLS=http://galera_etcd:2380"
-      - "ETCD-INITIAL-CLUSTER=etcd0=http://galera_etcd:2380"
+      - "ETCD_INITIAL_ADVERTISE_PEER_URLS=http://pxc_galera_etcd:2380"
+      - "ETCD-INITIAL-CLUSTER=etcd0=http://pxc_galera_etcd:2380"
       - "ETCD_INITIAL_CLUSTER_STATE=new"
       - "ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster-1"
 
   proxysql:
-    image: perconalab/proxysql:2.3.2
+    image: perconalab/proxysql:latest
     networks:
       - galera
-      - public
     ports:
-      - "3306:3306"
+      - "6033:6033"
       - "6032:6032"
     deploy:
       mode: replicated
       replicas: 1
-    update_config:
-      parallelism: 1
-    placements:
-      constraints: [node.labels.name == unison-master]
-    enviornment:
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
+    environment:
       - "CLUSTER_NAME=galera-cluster"
-      - "ETCD_HOST=galera_etcd"
-      - "DISCOVERY_SERVICE=galera_etcd:3379"
-      - "MYSQL_ROOT_PASSWORD=/run/secret/mysql_root_password"
-      - "MYSQL_PROXY_USER=/run/secret/mysql_proxy_user"
-      - "MYSQL_PROXY_PASSWORD=/run/secret/mysql_proxy_password"
+      - "ETCD_HOST=pxc_galera_etcd"
+      - "DISCOVERY_SERVICE=pxc_galera_etcd:2379"
+      - "MYSQL_ROOT_PASSWORD=93220809"
+      - "MYSQL_PROXY_USER=proxyuser"
+      - "MYSQL_PROXY_PASSWORD=proxypass"
 
+  percona-xtradb-cluster:
+    image: percona/percona-xtradb-cluster:5.7
+    networks:
+      - galera
+    volumes:
+      - mysql-percona-cluster:/var/lib/mysql
+    deploy:
+      mode: global
+      labels: [ APP=pxc ]
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: continue
+        monitor: 60s
+        max_failure_ratio: 0.3
+    environment:
+      - "DISCOVERY_SERVICE=pxc_galera_etcd:2379"
+      - "CLUSTER_NAME=galera-cluster"
+      - "MYSQL_ROOT_PASSWORD=93220809"
+      - "XTRABACKUP_PASSWORD=93220809"
 
 networks:
-  public:
   galera:
     driver: overlay
-    internal: true
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.148.2.0/24
 
 secrets:
   MYSQL_ROOT_PASSWORD:
@@ -66,3 +88,9 @@ secrets:
     external: true
   MYSQL_PROXY_PASSWORD:
     external: true
+  XTRABACKUP_PASSWORD:
+    external: true
+
+volumes:
+  mysql-percona-cluster:
+    driver: local
