@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-master]
+        max_replicas_per_node: 1
+    links:
+      - pxc_percona-xtradb-master
+    volumes:
+      - /opt/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
+    environment:
+      PMA_HOST: pxc_percona-xtradb-master
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - "10052:80"
+
+volumes:
+  phpmyadmin:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/phpmyadmin

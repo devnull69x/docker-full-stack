@@ -20,7 +20,7 @@ services:
     volumes:
       - /usr/share/ca-certificates/:/etc/ssl/certs
     environment:
-      - "ETCD_DATA_DIR=/var/lib/docker/volumes/etc_data/"
+      - "ETCD_DATA_DIR=/opt/etc_data/"
       - "ETCD_NAME=etcd-node-01"
       - "ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379,http://0.0.0.0:4001"
       - "ETCD_ADVERTISE_CLIENT_URLS=http://pxc_galera_etcd:2379,http://pxc_galera_etcd:4001"
@@ -44,53 +44,122 @@ services:
         constraints: [ node.labels.name == unison-master ]
         max_replicas_per_node: 1
     environment:
-      - "CLUSTER_NAME=galera-cluster"
-      - "ETCD_HOST=pxc_galera_etcd"
-      - "DISCOVERY_SERVICE=pxc_galera_etcd:2379"
-      - "MYSQL_ROOT_PASSWORD=93220809"
-      - "MYSQL_PROXY_USER=proxyuser"
-      - "MYSQL_PROXY_PASSWORD=proxypass"
+      CLUSTER_NAME: "galera-cluster"
+      ETCD_HOST: "pxc_galera_etcd"
+      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+      MYSQL_PROXY_USER: ${MYSQL_PROXY_USER}
+      MYSQL_PROXY_PASSWORD: ${MYSQL_PROXY_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-  percona-xtradb-cluster:
+  percona-xtradb-master:
     image: percona/percona-xtradb-cluster:5.7
     networks:
       - galera
     volumes:
-      - mysql-percona-cluster:/var/lib/mysql
+      - mysql-percona-master:/var/lib/mysql
     deploy:
-      mode: global
-      labels: [ APP=pxc ]
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-      update_config:
-        parallelism: 1
-        delay: 10s
-        failure_action: continue
-        monitor: 60s
-        max_failure_ratio: 0.3
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
     environment:
-      - "DISCOVERY_SERVICE=pxc_galera_etcd:2379"
-      - "CLUSTER_NAME=galera-cluster"
-      - "MYSQL_ROOT_PASSWORD=93220809"
-      - "XTRABACKUP_PASSWORD=93220809"
+      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
+      CLUSTER_NAME: "galera-cluster"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+
+  percona-xtradab-cluster-0:
+    image: percona/percona-xtradb-cluster:5.7
+    networks:
+      - galera
+    volumes:
+      - mysql-percona-cluster-0:/var/lib/mysql
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-0 ]
+        max_replicas_per_node: 1
+    environment:
+      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
+      CLUSTER_NAME: "galera-cluster"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+
+  percona-xtradab-cluster-1:
+    image: percona/percona-xtradb-cluster:5.7
+    networks:
+      - galera
+    volumes:
+      - mysql-percona-cluster-1:/var/lib/mysql
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-1 ]
+        max_replicas_per_node: 1
+    environment:
+      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
+      CLUSTER_NAME: "galera-cluster"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+
+  percona-xtradab-cluster-2:
+    image: percona/percona-xtradb-cluster:5.7
+    networks:
+      - galera
+    volumes:
+      - mysql-percona-cluster-2:/var/lib/mysql
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-2 ]
+        max_replicas_per_node: 1
+    environment:
+      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
+      CLUSTER_NAME: "galera-cluster"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    networks:
+      - galera
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
+    links:
+      - pxc_proxysql
+    environment:
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - "10052:80"
 
 networks:
   galera:
     driver: overlay
 
-secrets:
-  MYSQL_ROOT_PASSWORD:
-    external: true
-  MYSQL_PROXY_USER:
-    external: true
-  MYSQL_PROXY_PASSWORD:
-    external: true
-  XTRABACKUP_PASSWORD:
-    external: true
-
 volumes:
-  mysql-percona-cluster:
-    driver: local
+  mysql-percona-master:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/mysql-percona-cluster-master
+  mysql-percona-cluster-0:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/mysql-percona-cluster-0
+  mysql-percona-cluster-1:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/mysql-percona-cluster-1
+  mysql-percona-cluster-2:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/mysql-percona-cluster-2
