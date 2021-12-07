@@ -145,6 +145,7 @@ services:
 networks:
   galera:
     driver: overlay
+    attachable: true
 
 volumes:
   mysql-percona-master:

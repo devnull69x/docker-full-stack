@@ -12,13 +12,10 @@ services:
     volumes:
       - redis-cluster_data-0:/bitnami/redis/data:rw
     environment:
-      - 'REDIS_PASSWORD=/run/secrets/redis_password'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_NODES: "redis-node-0 redis-node-1 redis-node-2 redis-master"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
-    secrets:
-      - redis_password
-
 
   redis-node-1:
     image: docker.io/bitnami/redis-cluster:latest
@@ -31,12 +28,10 @@ services:
     volumes:
       - redis-cluster_data-1:/bitnami/redis/data:rw
     environment:
-      - 'REDIS_PASSWORD=/run/secrets/redis_password'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_NODES: "redis-node-0 redis-node-1 redis-node-2 redis-master"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
-    secrets:
-      - redis_password
 
   redis-node-2:
     image: docker.io/bitnami/redis-cluster:latest
@@ -49,12 +44,10 @@ services:
     volumes:
       - redis-cluster_data-2:/bitnami/redis/data:rw
     environment:
-      - 'REDIS_PASSWORD=/run/secrets/redis_password'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_NODES: "redis-node-0 redis-node-1 redis-node-2 redis-master"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
-    secrets:
-      - redis_password
 
   redis-master:
     image: docker.io/bitnami/redis-cluster:latest
@@ -71,17 +64,14 @@ services:
       - redis-node-1
       - redis-node-2
     environment:
-      - 'REDIS_PASSWORD=/run/secrets/redis_password'
-      - 'REDISCLI_AUTH=/run/secrets/redis_auth_password'
-      - 'REDIS_CLUSTER_REPLICAS=1'
-      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-master'
-      - 'REDIS_CLUSTER_CREATOR=yes'
-      - 'REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG'
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDISCLI_AUTH}
+      REDIS_CLUSTER_REPLICAS: "1"
+      REDIS_NODES: "redis-node-0 redis-node-1 redis-node-2 redis-master"
+      REDIS_CLUSTER_CREATOR: "yes"
+      REDIS_DISABLE_COMMANDS: "FLUSHDB,FLUSHALL,CONFIG"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
-    secrets:
-      - redis_password
-      - redis_auth_password
 
 volumes:
   redis_cluster_data_master:
@@ -100,9 +90,3 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/redis-cluster_data-2
-
-secrets:
-  redis_password:
-    external: true
-  redis_auth_password:
-    external: true
