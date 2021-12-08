@@ -4,6 +4,8 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
+    networks:
+      - pxc_galera
     deploy:
       mode: replicated
       replicas: 1
