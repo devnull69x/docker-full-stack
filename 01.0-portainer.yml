@@ -16,7 +16,7 @@ services:
       - /opt/portainer_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - portainer_default
+      - default
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
