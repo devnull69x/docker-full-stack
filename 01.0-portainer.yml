@@ -13,7 +13,7 @@ services:
     ports:
       - "10051:9443"
     volumes:
-      - /opt/portainer_data:/data
+      - /mnt/portainer_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - default
