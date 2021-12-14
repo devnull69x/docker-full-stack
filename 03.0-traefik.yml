@@ -9,8 +9,6 @@ services:
       replicas: 1
       placement:
         constraints: [node.labels.name == unison-master]
-      restart-policy:
-        condition: on-failure
       update_config:
         parallelism: 1
     command:

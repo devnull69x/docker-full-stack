@@ -23,6 +23,6 @@ services:
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 networks:
-  portainer_default:
+  default:
     driver: overlay
     attachable: true
