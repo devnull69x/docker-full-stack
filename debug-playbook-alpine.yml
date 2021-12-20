@@ -1,5 +1,5 @@
 ---
-# ansible-playbook -i configs/hosts debug-playbook.yml
+# ansible-playbook -i configs/hosts debug-playbook-alpine.yml
 
 - name: run discovery
   hosts: alpine-test
