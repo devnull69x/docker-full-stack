@@ -1,5 +1,5 @@
 ---
-# ansible-playbook -i configs/hosts playbook.yml
+# ansible-playbook -i configs/hosts playbook-alp.yml
 
 - name: run tasks on all hosts
   hosts: alpine-test
@@ -12,4 +12,3 @@
         update_cache: yes
         state: latest
         upgrade: yes
-        cache_valid_time: 3600
