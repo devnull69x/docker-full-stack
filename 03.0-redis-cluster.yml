@@ -78,16 +78,16 @@ volumes:
   redis_cluster_data_master:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/redis_cluster_data_master
+      mountpoint: /opt/sync/dk/redis_cluster_data_master
   redis-cluster_data-0:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/redis-cluster_data-0
+      mountpoint: /opt/sync/dk/redis-cluster_data-0
   redis-cluster_data-1:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/redis-cluster_data-1
+      mountpoint: /opt/sync/dk/redis-cluster_data-1
   redis-cluster_data-2:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/redis-cluster_data-2
+      mountpoint: /opt/sync/dk/redis-cluster_data-2

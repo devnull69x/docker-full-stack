@@ -3,8 +3,8 @@ version: "3.8"
 services:
   #created-in: portainer
   galera_etcd:
-    image: quay.io/coreos/etcd:latest
-    command: etcd
+    image: quay.io/coreos/etcd:v2.3.8
+    command: ["-name", "etcd0","-advertise-client-urls", "http://127.0.0.1:2379,http://127.0.0.1:4001","-listen-client-urls", "http://0.0.0.0:2379,http://0.0.0.0:4001","-initial-advertise-peer-urls", "http://127.0.0.1:2380","-listen-peer-urls", "http://0.0.0.0:2380","-initial-cluster", "etcd0=http://127.0.0.1:2380","-initial-cluster-token", "etcd-cluster-1","-initial-cluster", "etcd0=http://127.0.0.1:2380","-initial-cluster-state", "new"]
     deploy:
       mode: replicated
       replicas: 1
@@ -17,18 +17,6 @@ services:
       - "2379:2379"
       - "2380:2380"
       - "4001:4001"
-    volumes:
-      - /usr/share/ca-certificates/:/etc/ssl/certs
-    environment:
-      - "ETCD_DATA_DIR=/opt/etc_data/"
-      - "ETCD_NAME=etcd-node-01"
-      - "ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379,http://0.0.0.0:4001"
-      - "ETCD_ADVERTISE_CLIENT_URLS=http://pxc_galera_etcd:2379,http://pxc_galera_etcd:4001"
-      - "ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380"
-      - "ETCD_INITIAL_ADVERTISE_PEER_URLS=http://pxc_galera_etcd:2380"
-      - "ETCD-INITIAL-CLUSTER=etcd0=http://pxc_galera_etcd:2380"
-      - "ETCD_INITIAL_CLUSTER_STATE=new"
-      - "ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster-1"
 
   proxysql:
     image: perconalab/proxysql:latest
@@ -51,6 +39,8 @@ services:
       MYSQL_PROXY_USER: ${MYSQL_PROXY_USER}
       MYSQL_PROXY_PASSWORD: ${MYSQL_PROXY_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      PUID: "1001"
+      PGID: "1001"
 
   percona-xtradb-master:
     image: percona/percona-xtradb-cluster:5.7
@@ -70,14 +60,18 @@ services:
       CLUSTER_NAME: "galera-cluster"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+      PUID: "1001"
+      PGID: "1001"
 
   percona-xtradab-cluster-0:
     image: percona/percona-xtradb-cluster:5.7
+    depends_on:
+      - percona-xtradb-master
     networks:
       - galera
     volumes:
-      - mysql-percona-cluster-0:/var/lib/mysql
-      - mysql-percona-cluster-0-log:/var/log/mysql
+      - mysql-percona-cluster-0:/var/lib/mysql:rw
+      - mysql-percona-cluster-0-log:/var/log/mysql:rw
     deploy:
       mode: replicated
       replicas: 1
@@ -89,13 +83,18 @@ services:
       CLUSTER_NAME: "galera-cluster"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+      PUID: "1001"
+      PGID: "1001"
 
   percona-xtradab-cluster-1:
     image: percona/percona-xtradb-cluster:5.7
+    depends_on:
+      - percona-xtradb-master
     networks:
       - galera
     volumes:
-      - mysql-percona-cluster-1:/var/lib/mysql
+      - mysql-percona-cluster-1:/var/lib/mysql:rw
+      - mysql-percona-cluster-1-log:/var/log/mysql:rw
     deploy:
       mode: replicated
       replicas: 1
@@ -107,13 +106,18 @@ services:
       CLUSTER_NAME: "galera-cluster"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+      PUID: "1001"
+      PGID: "1001"
 
   percona-xtradab-cluster-2:
     image: percona/percona-xtradb-cluster:5.7
+    depends_on:
+      - percona-xtradb-master
     networks:
       - galera
     volumes:
-      - mysql-percona-cluster-2:/var/lib/mysql
+      - mysql-percona-cluster-2:/var/lib/mysql:rw
+      - mysql-percona-cluster-2-log:/var/log/mysql:rw
     deploy:
       mode: replicated
       replicas: 1
@@ -125,6 +129,8 @@ services:
       CLUSTER_NAME: "galera-cluster"
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+      PUID: "1001"
+      PGID: "1001"
 
 networks:
   galera:
@@ -135,24 +141,32 @@ volumes:
   mysql-percona-master:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/mysql-percona-cluster-master
+      mountpoint: /opt/sync/dk/mysql-percona-master
   mysql-percona-master-log:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/mysql-percona-cluster-master-log
+      mountpoint: /opt/sync/dk/mysql-percona-master-log
   mysql-percona-cluster-0:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/mysql-percona-cluster-0
+      mountpoint: /opt/sync/dk/mysql-percona-cluster-0
   mysql-percona-cluster-0-log:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/mysql-percona-cluster-0-log
+      mountpoint: /opt/sync/dk/mysql-percona-cluster-0-log
   mysql-percona-cluster-1:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/mysql-percona-cluster-1
+      mountpoint: /opt/sync/dk/mysql-percona-cluster-1
+  mysql-percona-cluster-1-log:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/mysql-percona-cluster-1-log
   mysql-percona-cluster-2:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/mysql-percona-cluster-2
+      mountpoint: /opt/sync/dk/mysql-percona-cluster-2
+  mysql-percona-cluster-2-log:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/mysql-percona-cluster-2-log

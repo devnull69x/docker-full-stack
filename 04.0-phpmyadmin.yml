@@ -4,8 +4,6 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
-    networks:
-      - pxc_galera
     deploy:
       mode: replicated
       replicas: 1
@@ -13,19 +11,25 @@ services:
         constraints: [node.labels.name == unison-master]
         max_replicas_per_node: 1
     links:
-      - pxc_percona-xtradb-master
+      - pxc_galera
     volumes:
-      - /opt/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
+      #- /opt/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
+      - phpmyadmin:/var/www/html:rw
     environment:
       PMA_HOST: pxc_percona-xtradb-master
       PMA_PORT: 3306
       PMA_ARBITRARY: 1
     restart: always
     ports:
-      - "10052:80"
+      - "10053:80"
 
 volumes:
   phpmyadmin:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/phpmyadmin
+      mountpoint: /opt/sync/dk/phpmyadmin
+
+networks:
+  default:
+    external: true
+    name: pxc_galera

@@ -3,7 +3,7 @@ version: '3.8'
 services:
   #created-in: portainer
   traefik:
-    image: traefik/traefik:2.5.4
+    image: traefik/traefik:2.5.6
     deploy:
       mode: replicated
       replicas: 1
@@ -12,31 +12,29 @@ services:
       update_config:
         parallelism: 1
     command:
-      - "--global.checkNewVersion=true"
-      - "--global.sendAnonymousUsage=false"
-      - "--entryPoints.http.address=:80"
-      - "--entryPoints.http.http.redirections.entryPoint.to=https"
-      - "--entryPoints.https.address=:443"
-      - "--entryPoints.traefik.address=:8080"
-      - "--api=true"
-      - "--api.dashboard=true"
-      - "--log=true"
-      - "--log.level=WARN"
-      - "--accessLog=true"
-      - "--accessLog.filePath=/traefik.log"
-      - "--accessLog.bufferingSize=100"
-      - "--accessLog.filters.statusCodes=400-499"
-      - "--providers.docker=true"
-      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
-      - "--providers.docker.exposedByDefault=false"
-      - "--providers.docker.network=traefik_proxy"
-      - "--providers.docker.swarmMode=false"
-      - "--providers.file.directory=/rules"
-      - "--providers.file.watch=true"
+      - --global.checkNewVersion=true
+      - --global.sendAnonymousUsage=false
+      - --entryPoints.http.address=:80
+      - --entryPoints.http.http.redirections.entryPoint.to=https
+      - --entryPoints.https.address=:443
+      - --entryPoints.traefik.address=:8080
+      - --api=true
+      - --api.dashboard=true
+      - --log=true
+      - --log.level=WARN
+      - --accessLog=true
+      - --accessLog.filePath=/traefik.log
+      - --accessLog.bufferingSize=100
+      - --accessLog.filters.statusCodes=400-499
+      - --providers.docker=true
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=traefik_proxy
+      - --providers.docker.swarmMode=false
+      - --providers.file.directory=/rules
+      - --providers.file.watch=true
     networks:
-      traefik_proxy:
-        ipv4_address: 10.148.0.100
-      docker_socket:
+      pxy:
     ports:
       - target: 80
         published: 80
@@ -46,8 +44,6 @@ services:
         published: 443
         protocol: tcp
         mode: host
-    security_opt:
-    - no-new-privileges: true
     volumes:
       - /mnt/traefik/rules:/rules
       - /mnt/traefik/acme/acme.json:/acme.json
@@ -128,7 +124,7 @@ services:
       - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
 
 networks:
-  traefik_proxy:
+  pxy:
     external: true
   docker_socket:
     external: true
