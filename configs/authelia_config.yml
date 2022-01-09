@@ -37,7 +37,6 @@ access_control:
 
 session:
   name: gjk_authelia_session
-  secret: ${AUTHELIA_SESSION_SECRET_FILE}
   expiration: 3600
   inactivity: 300
   domain: ganjaking.cloud
@@ -45,7 +44,6 @@ session:
 redis:
   host: redis_redis-master
   port: 6379
-  password: ${AUTHELIA_SESSION_REDIS_PASSWORD_FILE}
 
 regulation:
   max_retries: 3
@@ -56,12 +54,12 @@ storage:
   mysql:
     host: ${MYSQL_HOST}
     port: 3306
-    database: ${MYSQL_DATABASE}
-    username: ${MYSQL_USER_NAME}
+    database: authelia
+    username: ganjaking
 
 notifier:
   smtp:
     username: ${SMTP_USERNAME}
     host: smtp.gmail.com
     port: 587
-    sender: ${SMTP_SENDER}
+    sender: ${SMTP_USERNAME}

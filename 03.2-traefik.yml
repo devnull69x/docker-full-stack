@@ -34,7 +34,7 @@ services:
       - --providers.file.directory=/rules
       - --providers.file.watch=true
     networks:
-      pxy:
+      - pxy
     ports:
       - target: 80
         published: 80
@@ -114,17 +114,48 @@ services:
       - LIFETIME=2592000 # 30 days
     labels:
       - "traefik.enable=true"
-      ## HTTP Routers
       - "traefik.http.routers.oauth-rtr.entrypoints=https"
       - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.$DOMAINNAME`)"
-      ## Middlewares
       - "traefik.http.routers.oauth-rtr.middlewares=secure-chain@file,rate-limit@file"
-      ## HTTP Services
       - "traefik.http.routers.oauth-rtr.service=oauth-svc"
       - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
+
+  authelia:
+    image: authelia/authelia:latest
+    networks:
+      - pxy
+    volumes:
+      - authelia_data:/config:rw
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
+    environment:
+      - TZ=Asia/Singapore
+      - AUTHELIA_JWT_SECRET_FILE=${AUTHELIA_JWT_SECRET_FILE}
+      - AUTHELIA_SESSION_SECRET_FILE=${AUTHELIA_SESSION_SECRET_FILE}
+      - AUTHELIA_STORAGE_MYSQL_PASSWORD_FILE=${AUTHELIA_STORAGE_MYSQL_PASSWORD_FILE}
+      - AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE=${AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE}
+      - AUTHELIA_SESSION_REDIS_PASSWORD_FILE=${AUTHELIA_SESSION_REDIS_PASSWORD_FILE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia-rtr.entrypoints=https"
+      - "traefik.http.routers.authelia-rtr.rule=Host(`$DOMAINNAME0/authelia`)"
+      - "traefik.http.routers.authelia-rtr.tls=true"
+      - "traefik.http.routers.authelia-rtr.middlewares=chain-authelia@file"
+      - "traefik.http.routers.authelia-rtr.service=authelia-svc"
+      - "traefik.http.services.authelia-svc.loadbalancer.server.port=9091"
 
 networks:
   pxy:
     external: true
   docker_socket:
     external: true
+
+volumes:
+  authelia_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/authelia_data
