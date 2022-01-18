@@ -14,7 +14,7 @@ services:
       - redis-cluster_data-0:/bitnami/redis/data:rw
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_NODES: "redis-node-0 redis-node-1 redis-node-2 redis-master"
+      REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
@@ -30,7 +30,7 @@ services:
       - redis-cluster_data-1:/bitnami/redis/data:rw
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_NODES: "redis-node-0 redis-node-1 redis-node-2 redis-master"
+      REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
@@ -46,7 +46,7 @@ services:
       - redis-cluster_data-2:/bitnami/redis/data:rw
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_NODES: "redis-node-0 redis-node-1 redis-node-2 redis-master"
+      REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
@@ -68,7 +68,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDISCLI_AUTH: ${REDISCLI_AUTH}
       REDIS_CLUSTER_REPLICAS: "1"
-      REDIS_NODES: "redis-node-0 redis-node-1 redis-node-2 redis-master"
+      REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
       REDIS_CLUSTER_CREATOR: "yes"
       REDIS_DISABLE_COMMANDS: "FLUSHDB,FLUSHALL,CONFIG"
     labels:
