@@ -46,6 +46,8 @@ services:
 
   percona-xtradb-master:
     image: percona/percona-xtradb-cluster:5.7
+    depends_on:
+      - pxc_galera_etcd
     networks:
       - galera
     volumes:
@@ -68,7 +70,7 @@ services:
   percona-xtradab-cluster-0:
     image: percona/percona-xtradb-cluster:5.7
     depends_on:
-      - percona-xtradb-master
+      - pxc_percona-xtradb-master
     networks:
       - galera
     volumes:
@@ -91,7 +93,7 @@ services:
   percona-xtradab-cluster-1:
     image: percona/percona-xtradb-cluster:5.7
     depends_on:
-      - percona-xtradb-master
+      - pxc_percona-xtradb-master
     networks:
       - galera
     volumes:
@@ -114,7 +116,7 @@ services:
   percona-xtradab-cluster-2:
     image: percona/percona-xtradb-cluster:5.7
     depends_on:
-      - percona-xtradb-master
+      - pxc_percona-xtradb-master
     networks:
       - galera
     volumes:
