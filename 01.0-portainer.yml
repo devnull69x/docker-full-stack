@@ -13,14 +13,19 @@ services:
     ports:
       - "10051:9443"
     volumes:
-      - /opt/portainer_data:/data
+      - portainer_data:/data:rw
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - portainer_default
+      - default
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
 networks:
-  portainer_default:
+  default:
     driver: overlay
     attachable: true
+
+volumes:
+  portainer_data:
+    driver_opts:
+      mountpoint: /opt/portainer_data

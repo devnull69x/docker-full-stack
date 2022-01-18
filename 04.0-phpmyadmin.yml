@@ -19,6 +19,8 @@ services:
       PMA_HOST: pxc_percona-xtradb-master
       PMA_PORT: 3306
       PMA_ARBITRARY: 1
+      PUID: "1001"
+      PGID: "1001"
     restart: always
     ports:
       - "10053:80"
