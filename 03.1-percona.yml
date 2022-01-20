@@ -4,7 +4,7 @@ services:
   #created-in: portainer
   galera_etcd:
     image: quay.io/coreos/etcd:v2.3.8
-    command: ["–data-dir", "/opt/sync/dk/etcd_data", "-name", "etcd0","-advertise-client-urls", "http://127.0.0.1:2379,http://127.0.0.1:4001","-listen-client-urls", "http://0.0.0.0:2379,http://0.0.0.0:4001","-initial-advertise-peer-urls", "http://127.0.0.1:2380","-listen-peer-urls", "http://0.0.0.0:2380","-initial-cluster", "etcd0=http://127.0.0.1:2380","-initial-cluster-token", "etcd-cluster-1","-initial-cluster", "etcd0=http://127.0.0.1:2380","-initial-cluster-state", "new"]
+    command: ["--name", "etcd0","--advertise-client-urls", "http://127.0.0.1:2379,http://127.0.0.1:4001","--listen-client-urls", "http://0.0.0.0:2379,http://0.0.0.0:4001","--initial-advertise-peer-urls", "http://127.0.0.1:2380","--listen-peer-urls", "http://0.0.0.0:2380","--initial-cluster", "etcd0=http://127.0.0.1:2380","--initial-cluster-token", "etcd-cluster-1","--initial-cluster", "etcd0=http://127.0.0.1:2380","--initial-cluster-state", "new"]
     deploy:
       mode: replicated
       replicas: 1
@@ -14,7 +14,7 @@ services:
     networks:
       - galera
     volumes:
-      - etcd_data:/opt/etcd/data
+      - etcd_data:/var/lib/etcd
     ports:
       - "2379:2379"
       - "2380:2380"
@@ -27,6 +27,8 @@ services:
     ports:
       - "6033:6033"
       - "6032:6032"
+    volumes:
+      - proxysql_data:/var/lib/proxysql:rw
     deploy:
       mode: replicated
       replicas: 1
@@ -146,6 +148,10 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/dk/etcd_data
+  proxysql_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/proxysql_data
   mysql-percona-master:
     driver: local-persist
     driver_opts:
