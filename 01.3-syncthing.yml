@@ -1,5 +1,60 @@
 version: "3.8"
 
+########################### EXTENSION FIELDS ##############################
+x-ports: &common-keys-ports
+    ports:
+      - target: 8384
+        published: 10052
+        protocol: tcp
+        mode: host
+      - target: 22000
+        published: 22000
+        protocol: tcp
+        mode: host
+      - target: 22000
+        published: 22000
+        protocol: udp
+        mode: host
+
+x-environment: &common-keys-environment
+    environment:
+      PUID: "1001"
+      PGID: "1001"
+
+x-deploy-unison-master: &common-deploy-master
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+
+x-deploy-unison-0: &common-deploy-node-0
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-0 ]
+
+x-deploy-unison-1: &common-deploy-node-1
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-1 ]
+
+x-deploy-unison-2: &common-deploy-node-2
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-2 ]
+
+x-labels: &common-keys-labels
+    labels:
+      - "deunhealth.restart.on.unhealthy=true"
+
+########################### EXTENSION FIELDS ##############################
+
 services:
 
   master:
@@ -8,30 +63,10 @@ services:
       - sync
     volumes:
       - sync:/var/syncthing:rw
-    environment:
-      PUID: "1001"
-      GUID: "1001"
-      PGID: "1001"
-    ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: udp
-        mode: host
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-master]
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
+    <<: *common-keys-environment
+    <<: *common-keys-ports
+    <<: *common-deploy-master
+    <<: *common-keys-labels
 
   node-0:
     image: syncthing/syncthing:latest
@@ -39,30 +74,10 @@ services:
       - sync
     volumes:
       - sync:/var/syncthing:rw
-    environment:
-      PUID: "1001"
-      GUID: "1001"
-      PGID: "1001"
-    ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: udp
-        mode: host
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-node-0 ]
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
+    <<: *common-keys-environment
+    <<: *common-keys-ports
+    <<: *common-deploy-node-0
+    <<: *common-keys-labels
 
   node-1:
     image: syncthing/syncthing:latest
@@ -70,30 +85,10 @@ services:
       - sync
     volumes:
       - sync:/var/syncthing:rw
-    environment:
-      PUID: "1001"
-      GUID: "1001"
-      PGID: "1001"
-    ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: udp
-        mode: host
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-node-1 ]
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
+    <<: *common-keys-environment
+    <<: *common-keys-ports
+    <<: *common-deploy-node-1
+    <<: *common-keys-labels
 
   node-2:
     image: syncthing/syncthing:latest
@@ -101,30 +96,10 @@ services:
       - sync
     volumes:
       - sync:/var/syncthing:rw
-    environment:
-      PUID: "1001"
-      GUID: "1001"
-      PGID: "1001"
-    ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: udp
-        mode: host
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-node-2 ]
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
+    <<: *common-keys-environment
+    <<: *common-keys-ports
+    <<: *common-deploy-node-2
+    <<: *common-keys-labels
 
 volumes:
   sync:

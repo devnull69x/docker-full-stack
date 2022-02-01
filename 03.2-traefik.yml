@@ -34,7 +34,7 @@ services:
       - --providers.file.directory=/rules
       - --providers.file.watch=true
     networks:
-      - pxy
+      - traefik
     ports:
       - target: 80
         published: 80
@@ -94,12 +94,9 @@ services:
       replicas: 1
       placement:
         constraints: [node.labels.name == unison-master]
-      restart-policy:
-        condition: on-failure
+        max_replicas_per_node: 1
       update_config:
         parallelism: 1
-    security_opt:
-      - no-new-privileges: true
     environment:
       - CLIENT_ID=$GOOGLE_CLIENT_ID
       - CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
@@ -123,7 +120,7 @@ services:
   authelia:
     image: authelia/authelia:latest
     networks:
-      - pxy
+      - traefik
     volumes:
       - authelia_data:/config:rw
     deploy:
@@ -149,8 +146,9 @@ services:
       - "traefik.http.services.authelia-svc.loadbalancer.server.port=9091"
 
 networks:
-  pxy:
+  traefik:
     external: true
+    attachable: true
   docker_socket:
     external: true
 
