@@ -1,16 +1,57 @@
 version: "3.8"
+########################### EXTENSION FIELDS ##############################
+x-environment: &common-keys-environment
+    environment:
+      CLUSTER_NAME: "galera-cluster"
+      ETCD_HOST: "pxc_galera_etcd"
+      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+      MYSQL_PROXY_USER: ${MYSQL_PROXY_USER}
+      MYSQL_PROXY_PASSWORD: ${MYSQL_PROXY_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      PUID: "1001"
+      PGID: "1001"
+
+x-deploy-master: &common-deploy-master
+  deploy:
+    mode: replicated
+    replicas: 1
+    placement:
+      constraints: [ node.labels.name == unison-master ]
+      max_replicas_per_node: 1
+
+x-deploy-node-0: &common-deploy-node-0
+  deploy:
+    mode: replicated
+    replicas: 1
+    placement:
+      constraints: [ node.labels.name == unison-node-0 ]
+      max_replicas_per_node: 1
+
+x-deploy-node-1: &common-deploy-node-1
+  deploy:
+    mode: replicated
+    replicas: 1
+    placement:
+      constraints: [ node.labels.name == unison-node-1 ]
+      max_replicas_per_node: 1
+
+x-deploy-node-2: &common-deploy-node-2
+  deploy:
+    mode: replicated
+    replicas: 1
+    placement:
+      constraints: [ node.labels.name == unison-node-2 ]
+      max_replicas_per_node: 1
+
+########################### EXTENSION FIELDS ##############################
 
 services:
   #created-in: portainer
   galera_etcd:
     image: quay.io/coreos/etcd:v2.3.8
     command: ["--name", "etcd0","--advertise-client-urls", "http://127.0.0.1:2379,http://127.0.0.1:4001","--listen-client-urls", "http://0.0.0.0:2379,http://0.0.0.0:4001","--initial-advertise-peer-urls", "http://127.0.0.1:2380","--listen-peer-urls", "http://0.0.0.0:2380","--initial-cluster", "etcd0=http://127.0.0.1:2380","--initial-cluster-token", "etcd-cluster-1","--initial-cluster", "etcd0=http://127.0.0.1:2380","--initial-cluster-state", "new"]
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-master]
-        max_replicas_per_node: 1
+    <<: *common-deploy-master
     networks:
       - galera
     volumes:
@@ -29,22 +70,8 @@ services:
       - "6032:6032"
     volumes:
       - proxysql_data:/var/lib/proxysql:rw
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-master ]
-        max_replicas_per_node: 1
-    environment:
-      CLUSTER_NAME: "galera-cluster"
-      ETCD_HOST: "pxc_galera_etcd"
-      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
-      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
-      MYSQL_PROXY_USER: ${MYSQL_PROXY_USER}
-      MYSQL_PROXY_PASSWORD: ${MYSQL_PROXY_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      PUID: "1001"
-      PGID: "1001"
+    <<: *common-deploy-master
+    <<: *common-keys-environment
 
   percona-xtradb-master:
     image: percona/percona-xtradb-cluster:5.7
@@ -55,19 +82,8 @@ services:
     volumes:
       - mysql-percona-master:/var/lib/mysql
       - mysql-percona-master-log:/var/log/mysql
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-master ]
-        max_replicas_per_node: 1
-    environment:
-      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
-      CLUSTER_NAME: "galera-cluster"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
-      PUID: "1001"
-      PGID: "1001"
+    <<: *common-deploy-master
+    <<: *common-keys-environment
 
   percona-xtradab-cluster-0:
     image: percona/percona-xtradb-cluster:5.7
@@ -78,19 +94,8 @@ services:
     volumes:
       - mysql-percona-cluster-0:/var/lib/mysql:rw
       - mysql-percona-cluster-0-log:/var/log/mysql:rw
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-node-0 ]
-        max_replicas_per_node: 1
-    environment:
-      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
-      CLUSTER_NAME: "galera-cluster"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
-      PUID: "1001"
-      PGID: "1001"
+    <<: *common-deploy-node-0
+    <<: *common-keys-environment
 
   percona-xtradab-cluster-1:
     image: percona/percona-xtradb-cluster:5.7
@@ -101,19 +106,8 @@ services:
     volumes:
       - mysql-percona-cluster-1:/var/lib/mysql:rw
       - mysql-percona-cluster-1-log:/var/log/mysql:rw
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-node-1 ]
-        max_replicas_per_node: 1
-    environment:
-      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
-      CLUSTER_NAME: "galera-cluster"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
-      PUID: "1001"
-      PGID: "1001"
+    <<: *common-deploy-node-1
+    <<: *common-keys-environment
 
   percona-xtradab-cluster-2:
     image: percona/percona-xtradb-cluster:5.7
@@ -124,19 +118,8 @@ services:
     volumes:
       - mysql-percona-cluster-2:/var/lib/mysql:rw
       - mysql-percona-cluster-2-log:/var/log/mysql:rw
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-node-2 ]
-        max_replicas_per_node: 1
-    environment:
-      DISCOVERY_SERVICE: "pxc_galera_etcd:2379"
-      CLUSTER_NAME: "galera-cluster"
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
-      PUID: "1001"
-      PGID: "1001"
+    <<: *common-deploy-node-2
+    <<: *common-keys-environment
 
 networks:
   galera:
