@@ -1,63 +1,82 @@
 version: '3.8'
 
+########################### EXTENSION FIELDS ##############################
+
+x-deploy-master: &common-deploy-master
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
+
+x-deploy-node-0: &common-deploy-node-0
+  deploy:
+    mode: replicated
+    replicas: 1
+    placement:
+      constraints: [ node.labels.name == unison-node-0 ]
+      max_replicas_per_node: 1
+
+x-deploy-node-1: &common-deploy-node-1
+  deploy:
+    mode: replicated
+    replicas: 1
+    placement:
+      constraints: [ node.labels.name == unison-node-1 ]
+      max_replicas_per_node: 1
+
+x-deploy-node-2: &common-deploy-node-2
+  deploy:
+    mode: replicated
+    replicas: 1
+    placement:
+      constraints: [ node.labels.name == unison-node-2 ]
+      max_replicas_per_node: 1
+
+x-environment-nodes: &common-keys-environment-nodes
+  REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
+
+x-environment: &common-keys-environment
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      <<: *common-keys-environment-nodes
+
+x-labels: &common-keys-labels
+  labels:
+    - "deunhealth.restart.on.unhealthy=true"
+
+########################### EXTENSION FIELDS ##############################
+
 services:
   #created-in: portainer
   redis-node-0:
     image: docker.io/bitnami/redis-cluster:latest
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-node-0]
-        max_replicas_per_node: 1
+    <<: *common-deploy-node-0
     volumes:
       - redis-cluster_data-0:/bitnami/redis/data:rw
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
+    <<: *common-keys-environment
+    <<: *common-keys-labels
 
   redis-node-1:
     image: docker.io/bitnami/redis-cluster:latest
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-node-1]
-        max_replicas_per_node: 1
+    <<: *common-deploy-node-1
     volumes:
       - redis-cluster_data-1:/bitnami/redis/data:rw
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
+    <<: *common-keys-environment
+    <<: *common-keys-labels
 
   redis-node-2:
     image: docker.io/bitnami/redis-cluster:latest
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-node-2]
-        max_replicas_per_node: 1
+    <<: *common-deploy-node-2
     volumes:
       - redis-cluster_data-2:/bitnami/redis/data:rw
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
+    <<: *common-keys-environment
+    <<: *common-keys-labels
 
   redis-master:
     image: docker.io/bitnami/redis-cluster:latest
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-master]
-        max_replicas_per_node: 1
+    <<: *common-deploy-master
     volumes:
       - redis_cluster_data_master:/bitnami/redis/data
     depends_on:
@@ -68,11 +87,10 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDISCLI_AUTH: ${REDISCLI_AUTH}
       REDIS_CLUSTER_REPLICAS: "1"
-      REDIS_NODES: "redis_redis-node-0 redis_redis-node-1 redis_redis-node-2 redis_redis-master"
+      <<: *common-keys-environment-nodes
       REDIS_CLUSTER_CREATOR: "yes"
       REDIS_DISABLE_COMMANDS: "FLUSHDB,FLUSHALL,CONFIG"
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
+    <<: *common-keys-labels
 
 volumes:
   redis_cluster_data_master:
