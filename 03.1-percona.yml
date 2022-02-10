@@ -85,6 +85,18 @@ services:
     <<: *common-deploy-master
     <<: *common-keys-environment
 
+  percona-xtradb-master-01:
+    image: percona/percona-xtradb-cluster:5.7
+    depends_on:
+      - pxc_galera_etcd
+    networks:
+      - galera
+    volumes:
+      - mysql-percona-master-01:/var/lib/mysql
+      - mysql-percona-master-log-01:/var/log/mysql
+    <<: *common-deploy-master
+    <<: *common-keys-environment
+
   percona-xtradab-cluster-0:
     image: percona/percona-xtradb-cluster:5.7
     depends_on:
@@ -94,6 +106,18 @@ services:
     volumes:
       - mysql-percona-cluster-0:/var/lib/mysql:rw
       - mysql-percona-cluster-0-log:/var/log/mysql:rw
+    <<: *common-deploy-node-0
+    <<: *common-keys-environment
+
+  percona-xtradb-cluster-0-1:
+    image: percona/percona-xtradb-cluster:5.7
+    depends_on:
+      - pxc_percona-xtradb-master
+    networks:
+      - galera
+    volumes:
+      - mysql-percona-cluster-0-1:/var/lib/mysql:rw
+      - mysql-percona-cluster-0-1-log:/var/log/mysql:rw
     <<: *common-deploy-node-0
     <<: *common-keys-environment
 
@@ -143,6 +167,14 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/dk/mysql-percona-master-log
+  mysql-percona-master-01:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/mysql-percona-master-01
+  mysql-percona-master-log-01:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/mysql-percona-master-log-01
   mysql-percona-cluster-0:
     driver: local-persist
     driver_opts:
@@ -151,6 +183,14 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/dk/mysql-percona-cluster-0-log
+  mysql-percona-cluster-0-1:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/mysql-percona-cluster-0-1
+  mysql-percona-cluster-0-1-log:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/mysql-percona-cluster-0-1-log
   mysql-percona-cluster-1:
     driver: local-persist
     driver_opts:
