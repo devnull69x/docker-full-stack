@@ -33,7 +33,7 @@ services:
       - --entrypoints.https.http.tls.certresolver=dns-cloudflare
       - --entrypoints.https.http.tls.domains[0].main=$DOMAINNAME0
       - --entrypoints.https.http.tls.domains[0].sans=*.$DOMAINNAME0
-      - --providers.docker.network=traefik_proxy
+      - --providers.docker.network=traefik
       - --providers.docker.swarmMode=false
       - --providers.file.directory=/rules
       - --providers.file.watch=true
@@ -43,7 +43,7 @@ services:
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
     networks:
-      - traefik
+      - proxy
     ports:
       - target: 80
         published: 80
@@ -97,6 +97,8 @@ services:
   #created-in: portainer
   oauth:
     image: thomseddon/traefik-forward-auth:latest
+    networks:
+      - proxy
     deploy:
       mode: replicated
       replicas: 1
@@ -131,7 +133,7 @@ services:
   authelia:
     image: authelia/authelia:latest
     networks:
-      - traefik
+      - proxy
     volumes:
       - authelia_data:/config:rw
     deploy:
@@ -157,7 +159,7 @@ services:
       - "traefik.http.services.authelia-svc.loadbalancer.server.port=9091"
 
 networks:
-  traefik:
+  proxy:
     external: true
     attachable: true
   docker_socket:
