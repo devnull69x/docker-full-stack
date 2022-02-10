@@ -29,10 +29,19 @@ services:
       - --providers.docker=true
       - --providers.docker.endpoint=unix:///var/run/docker.sock
       - --providers.docker.exposedByDefault=false
+      - --entrypoints.https.http.tls.options=tls-opts@file
+      - --entrypoints.https.http.tls.certresolver=dns-cloudflare
+      - --entrypoints.https.http.tls.domains[0].main=$DOMAINNAME0
+      - --entrypoints.https.http.tls.domains[0].sans=*.$DOMAINNAME0
       - --providers.docker.network=traefik_proxy
       - --providers.docker.swarmMode=false
       - --providers.file.directory=/rules
       - --providers.file.watch=true
+      - --certificatesResolvers.dns-cloudflare.acme.email=$CLOUDFLARE_EMAIL
+      - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
     networks:
       - traefik
     ports:
@@ -45,12 +54,11 @@ services:
         protocol: tcp
         mode: host
     volumes:
-      - /mnt/traefik/rules:/rules
-      - /mnt/traefik/acme/acme.json:/acme.json
-      - /mnt/traefik/traefik.yml:/traefik.yml
-      - /mnt/traefik/log/traefik.log
-      - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+      - traefik_rules:/rules
+      - /opt/sync/dk/traefik_data/acme/acme.json:/acme.json
+      - /opt/sync/dk/traefik_data/log/traefik.log:/traefik.log
     labels:
       - "traefik.enable=true"
       # HTTP Routers
@@ -98,21 +106,24 @@ services:
       update_config:
         parallelism: 1
     environment:
-      - CLIENT_ID=$GOOGLE_CLIENT_ID
-      - CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+      - PROVIDERS_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+      - PROVIDERS_GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
       - SECRET=$GOOGLE_OAUTH_SECRET
-      - COOKIE_DOMAIN=$DOMAINNAME
+      - COOKIE_DOMAIN=$DOMAINNAME0
       - INSECURE_COOKIE=false
-      - AUTH_HOST=oauth.$DOMAINNAME
+      - AUTH_HOST=oauth.$DOMAINNAME0
       - URL_PATH=/_oauth
       - WHITELIST=$MY_EMAIL
-      - LOG_LEVEL=trace
+      - LOG_LEVEL=warn
       - LOG_FORMAT=text
       - LIFETIME=2592000 # 30 days
+      - DEFAULT_ACTION=auth
+      - DEFAULT_PROVIDER=google
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.oauth-rtr.tls=true"
       - "traefik.http.routers.oauth-rtr.entrypoints=https"
-      - "traefik.http.routers.oauth-rtr.rule=Host(`$DOMAINNAME/oauth`)"
+      - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.$DOMAINNAME0`)"
       - "traefik.http.routers.oauth-rtr.middlewares=secure-chain@file,rate-limit@file"
       - "traefik.http.routers.oauth-rtr.service=oauth-svc"
       - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
@@ -157,3 +168,15 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/dk/authelia_data
+  traefik_rules:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/traefik_data/rules
+  traefik_log:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/traefik_data/log
+  traefik_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/traefik_data
