@@ -3,7 +3,7 @@ version: '3.8'
 services:
   #created-in: portainer
   traefik:
-    image: traefik/traefik:2.5.6
+    image: traefik:2.6
     deploy:
       mode: replicated
       replicas: 1
@@ -31,17 +31,20 @@ services:
       - --providers.docker.exposedByDefault=false
       - --entrypoints.https.http.tls.options=tls-opts@file
       - --entrypoints.https.http.tls.certresolver=dns-cloudflare
-      - --entrypoints.https.http.tls.domains[0].main=$DOMAINNAME0
-      - --entrypoints.https.http.tls.domains[0].sans=*.$DOMAINNAME0
-      - --providers.docker.network=traefik
+      - --entrypoints.https.http.tls.domains[0].main=${DOMAINNAME0}
+      - --entrypoints.https.http.tls.domains[0].sans=*.${DOMAINNAME0}
+      - --providers.docker.network=traefik_proxy
       - --providers.docker.swarmMode=false
       - --providers.file.directory=/rules
       - --providers.file.watch=true
-      - --certificatesResolvers.dns-cloudflare.acme.email=$CLOUDFLARE_EMAIL
+      - --certificatesResolvers.dns-cloudflare.acme.email=${CLOUDFLARE_EMAIL}
       - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
+    environment:
+      - CF_API_EMAIL=${CLOUDFLARE_EMAIL}
+      - CF_API_KEY=${CLOUDFLARE_API_KEY}
     networks:
       - proxy
     ports:
@@ -51,6 +54,10 @@ services:
         mode: host
       - target: 443
         published: 443
+        protocol: tcp
+        mode: host
+      - target: 8080
+        published: 8080
         protocol: tcp
         mode: host
     volumes:
@@ -63,7 +70,7 @@ services:
       - "traefik.enable=true"
       # HTTP Routers
       - "traefik.http.routers.traefik-rtr.entrypoints=https"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME0`)"
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.${DOMAINNAME0}`)"
       - "traefik.http.routers.traefik-rtr.service=api@internal"
       - "traefik.http.routers.traefik-rtr.priority=10"
       # HTTP-to-HTTPS Redirect
@@ -74,13 +81,13 @@ services:
       ## Middlewares
       - "traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file"
       - "traefik.http.middlewares.traefik-headers.headers.accesscontrolallowmethods=GET, OPTIONS, PUT"
-      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolalloworiginlist=https://$DOMAINNAME"
+      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolalloworiginlist=https://${DOMAINNAME}"
       - "traefik.http.middlewares.traefik-headers.headers.accesscontrolmaxage=100"
       - "traefik.http.middlewares.traefik-headers.headers.addvaryheader=true"
-      - "traefik.http.middlewares.traefik-headers.headers.allowedhosts=traefik.$DOMAINNAME"
+      - "traefik.http.middlewares.traefik-headers.headers.allowedhosts=traefik.${DOMAINNAME}"
       - "traefik.http.middlewares.traefik-headers.headers.hostsproxyheaders=X-Forwarded-Host"
       - "traefik.http.middlewares.traefik-headers.headers.sslredirect=true"
-      - "traefik.http.middlewares.traefik-headers.headers.sslhost=traefik.$DOMAINNAME"
+      - "traefik.http.middlewares.traefik-headers.headers.sslhost=traefik.${DOMAINNAME}"
       - "traefik.http.middlewares.traefik-headers.headers.sslforcehost=true"
       - "traefik.http.middlewares.traefik-headers.headers.sslproxyheaders.X-Forwarded-Proto=https"
       - "traefik.http.middlewares.traefik-headers.headers.stsseconds=63072000"
@@ -108,14 +115,14 @@ services:
       update_config:
         parallelism: 1
     environment:
-      - PROVIDERS_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
-      - PROVIDERS_GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
-      - SECRET=$GOOGLE_OAUTH_SECRET
+      - PROVIDERS_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - SECRET=${GOOGLE_OAUTH_SECRET}
       - COOKIE_DOMAIN=$DOMAINNAME0
       - INSECURE_COOKIE=false
       - AUTH_HOST=oauth.$DOMAINNAME0
       - URL_PATH=/_oauth
-      - WHITELIST=$MY_EMAIL
+      - WHITELIST=${MY_EMAIL}
       - LOG_LEVEL=warn
       - LOG_FORMAT=text
       - LIFETIME=2592000 # 30 days
@@ -160,7 +167,6 @@ services:
 
 networks:
   proxy:
-    external: true
     attachable: true
   docker_socket:
     external: true

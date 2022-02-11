@@ -44,6 +44,7 @@ session:
 redis:
   host: redis_redis-master
   port: 6379
+  password: ${AUTHELIA_SESSION_REDIS_PASSWORD_FILE}
 
 regulation:
   max_retries: 3
@@ -56,6 +57,7 @@ storage:
     port: 3306
     database: authelia
     username: ganjaking
+    password: ${AUTHELIA_STORAGE_MYSQL_PASSWORD_FILE}
 
 notifier:
   smtp:

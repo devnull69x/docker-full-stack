@@ -1,0 +1,3 @@
+[[tls.certificates]] #first certificate
+    certFile = "/opt/sync/dk/traefik_data/certs/ganjaking.cloud.sslcert"
+    keyFile = "/opt/sync/dk/traefik_data/certs/ganjaking.cloud.sslkey"

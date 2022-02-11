@@ -7,22 +7,22 @@
 # or check them here: https://observatory.mozilla.org/
 
 [http.middlewares]
-[http.middlewares.secure-headers.headers]
-accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-accessControlMaxAge = 100
-hostsProxyHeaders = ["X-Forwarded-Host"]
-sslRedirect = true
-stsSeconds = 63072000
-stsIncludeSubdomains = true
-stsPreload = true
-forceSTSHeader = true
-#    frameDeny = true
-customFrameOptionsValue = "allow-from https:<your domain>" # This option overrides frameDeny
-contentTypeNosniff = true
-browserXssFilter = true
-#    contentSecurityPolicy = "default-src 'self'; frame-ancestors 'none'; script-src 'none'; object-src 'none'; base-uri 'none';"
-referrerPolicy = "same-origin"
-featurePolicy = "camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';"
-[http.middlewares.secure-headers.headers.customResponseHeaders]
-X-Robots-Tag = "none,noarchive,nosnippet,notranslate,noimageindex,"
-#      Set-Cookie = "__Secure-sess=123; path=/; HttpOnly; Secure; SameSite=Lax;"
+    [http.middlewares.secure-headers.headers]
+        accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
+        accessControlMaxAge = 100
+        hostsProxyHeaders = ["X-Forwarded-Host"]
+        sslRedirect = true
+        stsSeconds = 63072000
+        stsIncludeSubdomains = true
+        stsPreload = true
+        forceSTSHeader = true
+        #    frameDeny = true
+        customFrameOptionsValue = "allow-from https:<your domain>" # This option overrides frameDeny
+        contentTypeNosniff = true
+        browserXssFilter = true
+        #    contentSecurityPolicy = "default-src 'self'; frame-ancestors 'none'; script-src 'none'; object-src 'none'; base-uri 'none';"
+        referrerPolicy = "same-origin"
+        featurePolicy = "camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';"
+        [http.middlewares.secure-headers.headers.customResponseHeaders]
+        X-Robots-Tag = "none,noarchive,nosnippet,notranslate,noimageindex,"
+        #      Set-Cookie = "__Secure-sess=123; path=/; HttpOnly; Secure; SameSite=Lax;"
