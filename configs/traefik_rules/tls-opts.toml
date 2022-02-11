@@ -1,5 +1,9 @@
 [tls]
     [tls.options]
+        [tls.options.default]
+            [tls.options.default.clientAuth]
+                caFiles = ["certs/ganjaking.cloud.ca"]
+                clientAuthType = "RequireAndVerifyClientCert"
         [tls.options.tls-opts]
             minVersion = "VersionTLS12"
             cipherSuites = [

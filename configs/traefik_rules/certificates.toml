@@ -1,3 +1,9 @@
 [[tls.certificates]] #first certificate
-    certFile = "/opt/sync/dk/traefik_data/certs/ganjaking.cloud.sslcert"
-    keyFile = "/opt/sync/dk/traefik_data/certs/ganjaking.cloud.sslkey"
+    certFile = "/opt/sync/dk/traefik_data/certs/ganjaking.cloud.cert"
+    keyFile = "/opt/sync/dk/traefik_data/certs/ganjaking.cloud.key"
+
+[tls.stores]
+    [tls.stores.default]
+        [tls.stores.default.defaultCertificate]
+            certFile = "/opt/sync/dk/traefik_data/certs/ganjaking.cloud.cert"
+            keyFile = "/opt/sync/dk/traefik_data/certs/ganjaking.cloud.key"
