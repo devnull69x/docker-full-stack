@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+
+#created-in: portainer
+  traefik:
+    image: jc21/nginx-proxy-manager:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-master]
+      update_config:
+        parallelism: 1
+    environment:
+      - DB_MYSQL_HOST=pxc_percona-xtradb-master
+      - DB_MYSQL_PORT=3306
+      - DB_MYSQL_USER=${DB_MYSQL_USER}
+      - DB_MYSQL_PASSWORD=${DB_MYSQL_PASSWORD}
+      - DB_MYSQL_NAME=${DB_MYSQL_NAME}
+    networks:
+      - proxy
+      - pxc_galera
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+      - target: 81
+        published: 8080
+        protocol: tcp
+        mode: host
+    volumes:
+      - npm_data:/data
+      - npm_encrypt:/etc/letsencrypt
+
+networks:
+  proxy:
+    attachable: true
+
+volumes:
+  npm_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/npm_data
+  npm_encrypt:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/npm_data/encrypt
