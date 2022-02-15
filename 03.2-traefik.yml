@@ -1,18 +1,5 @@
 version: '3.8'
 
-########################### SECRETS
-secrets:
-  authelia_jwt_secret:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_jwt_secret
-  authelia_session_secret:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_session_secret
-  authelia_storage_mysql_password:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_storage_mysql_password
-  authelia_notifier_smtp_password:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_notifier_smtp_password
-  authelia_session_redis_password:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_session_redis_password
-
 services:
   #created-in: portainer
   traefik:
@@ -50,8 +37,9 @@ services:
       #- --entrypoints.https.http.tls.domains[0].main=${DOMAINNAME0}
       #- --entrypoints.https.http.tls.domains[0].sans=*.${DOMAINNAME0}
       - --providers.docker.network=traefik_proxy
-      - --providers.docker.swarmMode=false
+      - --providers.docker.swarmMode=true
       - --providers.docker.swarmModeRefreshSeconds=15s
+      - --constraint=node.role==manager
       - --providers.docker.defaultRule=Host("${DOMAINNAME}")
       - --providers.file.directory=/rules
       - --providers.file.watch=true
@@ -84,6 +72,7 @@ services:
       - traefik_rules:/rules
       - /opt/sync/dk/traefik_data/acme/acme.json:/acme.json
       - /opt/sync/dk/traefik_data/log/traefik.log:/traefik.log
+      - traefik_certs:/certs/
     labels:
       - "traefik.enable=true"
       # HTTP Routers
@@ -199,6 +188,18 @@ networks:
   docker_socket:
     external: true
 
+secrets:
+  authelia_jwt_secret:
+    file: /opt/sync/dk/authelia_data/secrets/authelia_jwt_secret
+  authelia_session_secret:
+    file: /opt/sync/dk/authelia_data/secrets/authelia_session_secret
+  authelia_storage_mysql_password:
+    file: /opt/sync/dk/authelia_data/secrets/authelia_storage_mysql_password
+  authelia_notifier_smtp_password:
+    file: /opt/sync/dk/authelia_data/secrets/authelia_notifier_smtp_password
+  authelia_session_redis_password:
+    file: /opt/sync/dk/authelia_data/secrets/authelia_session_redis_password
+
 volumes:
   authelia_data:
     driver: local-persist
@@ -216,3 +217,7 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/dk/traefik_data
+  traefik_certs:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/traefik_data/certs
