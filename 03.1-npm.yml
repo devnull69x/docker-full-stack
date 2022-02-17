@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-
 #created-in: portainer
   traefik:
     image: jc21/nginx-proxy-manager:latest
@@ -18,6 +17,8 @@ services:
       - DB_MYSQL_USER=${DB_MYSQL_USER}
       - DB_MYSQL_PASSWORD=${DB_MYSQL_PASSWORD}
       - DB_MYSQL_NAME=${DB_MYSQL_NAME}
+      - PUID: "1001"
+      - PGID: "1001"
     networks:
       - proxy
       - pxc_galera
@@ -41,6 +42,8 @@ services:
 networks:
   proxy:
     attachable: true
+  pxc_galera:
+    external: true
 
 volumes:
   npm_data:
