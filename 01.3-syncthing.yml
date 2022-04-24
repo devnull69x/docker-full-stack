@@ -53,12 +53,17 @@ x-labels: &common-keys-labels
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
+x-depends: &common-keys-depends
+    depends_on:
+      - utilz_local-persist
+
 ########################### EXTENSION FIELDS ##############################
 
 services:
 
   master:
     image: syncthing/syncthing:latest
+    <<: *common-keys-labels
     networks:
       - sync
     volumes:
@@ -70,6 +75,7 @@ services:
 
   node-0:
     image: syncthing/syncthing:latest
+    <<: *common-keys-labels
     networks:
       - sync
     volumes:
@@ -81,6 +87,7 @@ services:
 
   node-1:
     image: syncthing/syncthing:latest
+    <<: *common-keys-labels
     networks:
       - sync
     volumes:
@@ -92,6 +99,7 @@ services:
 
   node-2:
     image: syncthing/syncthing:latest
+    <<: *common-keys-labels
     networks:
       - sync
     volumes:
