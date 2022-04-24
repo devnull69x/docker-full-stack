@@ -4,6 +4,8 @@ services:
   #created-in: docker stack deploy -c 01.0-portainer.yml portainer
   portainer:
     image: portainer/portainer-ee:latest
+    depends_on:
+      - utilz_local-persist
     command: -H tcp://tasks.agent:9001 --tlsskipverify
     deploy:
       mode: replicated

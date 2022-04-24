@@ -1,0 +1,19 @@
+[http.routers]
+    [http.routers.phpmyadmin-rtr]
+        entryPoints = ["https"]
+        rule = "Host(`ganjaking.cloud`)"
+        service = "phpmyadmin"
+        middlewares = ["secure-chain", "add-admin"]
+        [http.routers.phpmyadmin-rtr.tls]
+            certresolver = "dns-cloudflare"
+
+[http.middlewares]
+    [http.middlewares.add-admin.addPrefix]
+        prefix = "/admin"
+
+[http.services]
+    [http.services.phpmyadmin-svc]
+        [http.services.pihole-svc.loadBalancer]
+            passHostHeader = true
+        [[http.services.pihole-svc.loadBalancer.servers]]
+            url = "https://ganjaking.cloud:10053" # or whatever your external host's IP:port is

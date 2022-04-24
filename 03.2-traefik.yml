@@ -22,7 +22,7 @@ services:
       - --api.dashboard=true
       - --api.insecure=true
       - --log=true
-      - --log.level=WARN
+      - --log.level=INFO
       - --accessLog=true
       - --accessLog.filePath=/traefik.log
       - --accessLog.bufferingSize=100
@@ -107,6 +107,13 @@ services:
       - "traefik.http.middlewares.traefik-headers.headers.referrerpolicy=same-origin"
       - "traefik.http.middlewares.traefik-headers.headers.featurepolicy=camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';"
       - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Robots-Tag=none,noarchive,nosnippet,notranslate,noimageindex,"
+      - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
+      ## API Forward Auth Bypass #
+      - "traefik.http.routers.traefik-bypass.entrypoints=https"
+      - "traefik.http.routers.traefik-bypass.rule=Host(`$DOMAINNAME/traefik`) && PathPrefix(`/api/`)"
+      - "traefik.http.routers.traefik-bypass.middlewares=traefik-headers,traefik-basicauth,rate-limit@file"
+      - "traefik.http.routers.traefik-bypass.priority=20"
+      - "traefik.http.routers.traefik-bypass.service=api@internal"
 
   #created-in: portainer
   oauth:
@@ -139,7 +146,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.oauth-rtr.tls=true"
       - "traefik.http.routers.oauth-rtr.entrypoints=https"
-      - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.${DOMAINNAME}`)"
+      - "traefik.http.routers.oauth-rtr.rule=Host(`${DOMAINNAME}/oauth`)"
       - "traefik.http.routers.oauth-rtr.middlewares=secure-chain@file,rate-limit@file"
       - "traefik.http.routers.oauth-rtr.service=oauth-svc"
       - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
