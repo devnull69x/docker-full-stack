@@ -63,7 +63,7 @@ services:
 
   master:
     image: syncthing/syncthing:latest
-    <<: *common-keys-labels
+    <<: *common-keys-depends
     networks:
       - sync
     volumes:
@@ -75,7 +75,7 @@ services:
 
   node-0:
     image: syncthing/syncthing:latest
-    <<: *common-keys-labels
+    <<: *common-keys-depends
     networks:
       - sync
     volumes:
@@ -87,7 +87,7 @@ services:
 
   node-1:
     image: syncthing/syncthing:latest
-    <<: *common-keys-labels
+    <<: *common-keys-depends
     networks:
       - sync
     volumes:
@@ -99,7 +99,7 @@ services:
 
   node-2:
     image: syncthing/syncthing:latest
-    <<: *common-keys-labels
+    <<: *common-keys-depends
     networks:
       - sync
     volumes:
