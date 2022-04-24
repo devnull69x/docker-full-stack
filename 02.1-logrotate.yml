@@ -4,6 +4,8 @@ services:
   #created-in: portainer
   logrotate:
     image: blacklabelops/logrotate:latest
+    depends_on:
+      - utilz_local-persist
     deploy:
       mode: global
       placement:

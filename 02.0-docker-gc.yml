@@ -4,6 +4,8 @@ services:
   #created-in: portainer
   dockergc:
     image: clockworksoul/docker-gc-cron:latest
+    depends_on:
+      - utilz_local-persist
     deploy:
       mode: global
       placement:
