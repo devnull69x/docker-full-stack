@@ -46,12 +46,17 @@ x-labels: &common-keys-labels
   labels:
     - "deunhealth.restart.on.unhealthy=true"
 
+x-depends: &common-keys-depends
+  depends_on:
+    - utilz_local-persist
+
 ########################### EXTENSION FIELDS ##############################
 
 services:
   #created-in: portainer
   redis-node-0:
     image: docker.io/bitnami/redis-cluster:latest
+    <<: *common-keys-depends
     <<: *common-deploy-node-0
     volumes:
       - redis-cluster_data-0:/bitnami/redis/data:rw
@@ -60,6 +65,7 @@ services:
 
   redis-node-1:
     image: docker.io/bitnami/redis-cluster:latest
+    <<: *common-keys-depends
     <<: *common-deploy-node-1
     volumes:
       - redis-cluster_data-1:/bitnami/redis/data:rw
@@ -68,6 +74,7 @@ services:
 
   redis-node-2:
     image: docker.io/bitnami/redis-cluster:latest
+    <<: *common-keys-depends
     <<: *common-deploy-node-2
     volumes:
       - redis-cluster_data-2:/bitnami/redis/data:rw
@@ -76,6 +83,7 @@ services:
 
   redis-master:
     image: docker.io/bitnami/redis-cluster:latest
+    <<: *common-keys-depends
     <<: *common-deploy-master
     volumes:
       - redis_cluster_data_master:/bitnami/redis/data
