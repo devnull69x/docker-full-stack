@@ -28,8 +28,6 @@ gcloud compute snapshots delete "unison-node-0-alp2" --project=gerekper
 gcloud compute snapshots delete "unison-node-1-alp2" --project=gerekper
 gcloud compute snapshots delete "unison-node-0-alp2" --project=gerekper
 
-docker swarm join --token SWMTKN-1-0ycmvk6kets4ot723u0clwc5ff7rov4vde1cqhvp5z8arg0q2a-6n58jigb5t04p1vsghkql4jz5 10.148.0.100:2377
-
 docker node update --label-add name=unison-master
 docker node update --label-add unison-master
   
