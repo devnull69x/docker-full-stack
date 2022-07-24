@@ -2,31 +2,37 @@ gcloud compute instances create unison-master --project=gerekper --zone=asia-sou
 gcloud compute instances create unison-node-0 --project=gerekper --zone=asia-southeast1-a --machine-type=e2-medium --network-interface=private-network-ip=10.148.0.101,network-tier=PREMIUM,subnet=default --maintenance-policy=MIGRATE --service-account=1033536199968-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --create-disk=auto-delete=yes,boot=yes,device-name=unison-node-0,mode=rw,size=50,source-snapshot=projects/gerekper/global/snapshots/unison-node-0-alp2,type=projects/gerekper/zones/asia-southeast1-a/diskTypes/pd-ssd --reservation-affinity=any
 gcloud compute instances create unison-node-1 --project=gerekper --zone=asia-southeast1-a --machine-type=e2-small --network-interface=private-network-ip=10.148.0.102,network-tier=PREMIUM,subnet=default --maintenance-policy=MIGRATE --service-account=1033536199968-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --create-disk=auto-delete=yes,boot=yes,device-name=unison-node-1,mode=rw,size=50,source-snapshot=projects/gerekper/global/snapshots/unison-node-1-alp2,type=projects/gerekper/zones/asia-southeast1-a/diskTypes/pd-ssd --reservation-affinity=any
 gcloud compute instances create unison-node-2 --project=gerekper --zone=asia-southeast1-a --machine-type=e2-small --network-interface=private-network-ip=10.148.0.103,network-tier=PREMIUM,subnet=default --maintenance-policy=MIGRATE --service-account=1033536199968-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --create-disk=auto-delete=yes,boot=yes,device-name=unison-node-2,mode=rw,size=50,source-snapshot=projects/gerekper/global/snapshots/unison-node-2-alp2,type=projects/gerekper/zones/asia-southeast1-a/diskTypes/pd-ssd --reservation-affinity=any
+gcloud compute instances create unison-node-3 --project=gerekper --zone=asia-southeast1-a --machine-type=e2-small --network-interface=private-network-ip=10.148.0.104,network-tier=PREMIUM,subnet=default --maintenance-policy=MIGRATE --service-account=1033536199968-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --create-disk=auto-delete=yes,boot=yes,device-name=unison-node-2,mode=rw,size=50,source-snapshot=projects/gerekper/global/snapshots/unison-node-2-alp2,type=projects/gerekper/zones/asia-southeast1-a/diskTypes/pd-ssd --reservation-affinity=any
 
 gcloud compute instances delete unison-master --project=gerekper --zone=asia-southeast1-a
 gcloud compute instances delete unison-node-0 --project=gerekper --zone=asia-southeast1-a
 gcloud compute instances delete unison-node-1 --project=gerekper --zone=asia-southeast1-a
 gcloud compute instances delete unison-node-2 --project=gerekper --zone=asia-southeast1-a
+gcloud compute instances delete unison-node-3 --project=gerekper --zone=asia-southeast1-a
 
 gcloud compute ssh --zone "asia-southeast1-a" alpine@"unison-master"  --project "gerekper"
 gcloud compute ssh --zone "asia-southeast1-a" alpine@"unison-node-0"  --project "gerekper"
 gcloud compute ssh --zone "asia-southeast1-a" alpine@"unison-node-1"  --project "gerekper"
 gcloud compute ssh --zone "asia-southeast1-a" alpine@"unison-node-2"  --project "gerekper"
+gcloud compute ssh --zone "asia-southeast1-a" alpine@"unison-node-3"  --project "gerekper"
 
 gcloud compute instances stop "unison-master" --zone "asia-southeast1-a" --project "gerekper"
 gcloud compute instances stop "unison-node-0" --zone "asia-southeast1-a" --project "gerekper"
 gcloud compute instances stop "unison-node-1" --zone "asia-southeast1-a" --project "gerekper"
 gcloud compute instances stop "unison-node-2" --zone "asia-southeast1-a" --project "gerekper"
+gcloud compute instances stop "unison-node-3" --zone "asia-southeast1-a" --project "gerekper"
 
 gcloud compute snapshots create unison-master-alp2 --project=gerekper --source-disk=unison-master --description=unison-master --source-disk-zone=asia-southeast1-a --storage-location=asia-southeast1
 gcloud compute snapshots create unison-node-0-alp2 --project=gerekper --source-disk=unison-node-0 --description=unison-master --source-disk-zone=asia-southeast1-a --storage-location=asia-southeast1
 gcloud compute snapshots create unison-node-1-alp2 --project=gerekper --source-disk=unison-node-1 --description=unison-master --source-disk-zone=asia-southeast1-a --storage-location=asia-southeast1
 gcloud compute snapshots create unison-node-2-alp2 --project=gerekper --source-disk=unison-node-2 --description=unison-master --source-disk-zone=asia-southeast1-a --storage-location=asia-southeast1
+gcloud compute snapshots create unison-node-3-alp2 --project=gerekper --source-disk=unison-node-3 --description=unison-master --source-disk-zone=asia-southeast1-a --storage-location=asia-southeast1
 
 gcloud compute snapshots delete "unison-master-alp2" --project=gerekper
 gcloud compute snapshots delete "unison-node-0-alp2" --project=gerekper
 gcloud compute snapshots delete "unison-node-1-alp2" --project=gerekper
-gcloud compute snapshots delete "unison-node-0-alp2" --project=gerekper
+gcloud compute snapshots delete "unison-node-2-alp2" --project=gerekper
+gcloud compute snapshots delete "unison-node-3-alp2" --project=gerekper
 
 docker node update --label-add name=unison-master
 docker node update --label-add unison-master
