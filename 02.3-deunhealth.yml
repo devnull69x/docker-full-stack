@@ -5,7 +5,7 @@ services:
   deunhealth:
     image: qmcgaw/deunhealth
     depends_on:
-      - utilz_local-persist
+      - persist_local-persist
     deploy:
       mode: global
       placement:

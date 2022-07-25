@@ -55,7 +55,7 @@ x-labels: &common-keys-labels
 
 x-depends: &common-keys-depends
     depends_on:
-      - utilz_local-persist
+      - persist_local-persist
 
 ########################### EXTENSION FIELDS ##############################
 
