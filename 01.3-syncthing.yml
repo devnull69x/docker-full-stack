@@ -63,7 +63,8 @@ services:
 
   master:
     image: syncthing/syncthing:latest
-    <<: *common-keys-depends
+    depends_on:
+      - _local-persist
     networks:
       - sync
     volumes:
