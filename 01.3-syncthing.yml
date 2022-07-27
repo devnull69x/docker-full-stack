@@ -158,7 +158,7 @@ services:
       mode: replicated
       replicas: 1
       placement:
-        constraints: [ node.labels.name == unison-node-0 ]
+        constraints: [ node.labels.name == unison-node-3 ]
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
