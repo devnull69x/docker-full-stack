@@ -1,7 +1,6 @@
 version: '3.8'
 
 ########################### EXTENSION FIELDS ##############################
-
 x-deploy-master: &common-deploy-master
     deploy:
       mode: replicated
@@ -50,6 +49,18 @@ x-environment: &common-keys-environment
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       <<: *common-keys-environment-nodes
 
+x-environment-slave: &common-keys-slave
+   environment:
+     REDIS_PASSWORD: ${REDIS_PASSWORD}
+     REDIS_APPLICATION_MODE: "slave"
+     REDIS_MASTER_HOST: "redis_redis-master"
+     REDIS_MASTER_PORT: 6379
+     REDIS_MASTER_PASSWORD: ${REDIS_PASSWORD}
+     REDIS_SLAVE_ON: "yes"
+     REDIS_SLAVE_PARALLEL_SYNCS: "yes"
+     REDIS_SLAVE_PARALLEL_SYNCS_PER_SLAVE: "yes"
+     <<: *common-keys-environment-nodes
+
 x-labels: &common-keys-labels
   labels:
     - "deunhealth.restart.on.unhealthy=true"
@@ -64,42 +75,67 @@ services:
   #created-in: portainer
   redis-node-0:
     image: docker.io/bitnami/redis-cluster:latest
+    ports:
+      - target: 6379
+        published: 6379
+        protocol: tcp
+        mode: host
     <<: *common-keys-depends
     <<: *common-deploy-node-0
     volumes:
       - redis-cluster_data-0:/bitnami/redis/data:rw
-    <<: *common-keys-environment
+    <<: *common-keys-slave
     <<: *common-keys-labels
 
   redis-node-1:
     image: docker.io/bitnami/redis-cluster:latest
+    ports:
+      - target: 6379
+        published: 6379
+        protocol: tcp
+        mode: host
     <<: *common-keys-depends
     <<: *common-deploy-node-1
     volumes:
       - redis-cluster_data-1:/bitnami/redis/data:rw
-    <<: *common-keys-environment
+    <<: *common-keys-slave
     <<: *common-keys-labels
 
   redis-node-2:
     image: docker.io/bitnami/redis-cluster:latest
+    ports:
+      - target: 6379
+        published: 6379
+        protocol: tcp
+        mode: host
     <<: *common-keys-depends
     <<: *common-deploy-node-2
     volumes:
       - redis-cluster_data-2:/bitnami/redis/data:rw
-    <<: *common-keys-environment
+    <<: *common-keys-slave
     <<: *common-keys-labels
 
   redis-node-3:
     image: docker.io/bitnami/redis-cluster:latest
+    ports:
+      - target: 6379
+        published: 6379
+        protocol: tcp
+        mode: host
     <<: *common-keys-depends
     <<: *common-deploy-node-3
     volumes:
       - redis-cluster_data-3:/bitnami/redis/data:rw
-    <<: *common-keys-environment
+    <<: *common-keys-slave
     <<: *common-keys-labels
 
   redis-master:
     image: docker.io/bitnami/redis-cluster:latest
+    ports:
+      - target: 6379
+        published: 6379
+        protocol: tcp
+        mode: host
     <<: *common-keys-depends
     <<: *common-deploy-master
     volumes:
@@ -113,6 +149,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDISCLI_AUTH: ${REDISCLI_AUTH}
       REDIS_CLUSTER_REPLICAS: "1"
+      REDIS_REPLICATION_MODE: "master"
       <<: *common-keys-environment-nodes
       REDIS_CLUSTER_CREATOR: "yes"
       REDIS_DISABLE_COMMANDS: "FLUSHDB,FLUSHALL,CONFIG"
