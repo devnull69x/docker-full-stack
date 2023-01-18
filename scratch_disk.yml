@@ -42,4 +42,6 @@ docker node update --label-add name=unison-node-3 unison-node-3
 
 sudo reboot
   
+openssl req -new -newkey rsa:2048 -nodes -keyout ganjaking_cloud.key -out ganjaking_cloud.csr
+openssl req -new -newkey rsa:2048 -nodes -keyout ganjaking_asia.key -out ganjaking_asia.csr
 
