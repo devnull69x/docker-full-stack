@@ -25,7 +25,7 @@ networks:
     driver: overlay
     attachable: true
 
-#volumes:
-  #portainer_data:
-    #driver_opts:
-      #mountpoint: /opt/portainer_data
+volumes:
+  portainer_data:
+    driver_opts:
+      mountpoint: /opt/portainer_data

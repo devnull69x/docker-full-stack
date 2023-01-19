@@ -35,7 +35,7 @@ gcloud compute snapshots delete "unison-node-2-alp2" --project=gerekper
 gcloud compute snapshots delete "unison-node-3-alp2" --project=gerekper
 
 docker node update --label-add name=unison-master unison-master
-docker node update --label-add name=unison-node-0 unison-node-1
+docker node update --label-add name=unison-node-0 unison-node-0
 docker node update --label-add name=unison-node-1 unison-node-1
 docker node update --label-add name=unison-node-2 unison-node-2
 docker node update --label-add name=unison-node-3 unison-node-3
@@ -44,4 +44,6 @@ sudo reboot
   
 openssl req -new -newkey rsa:2048 -nodes -keyout ganjaking_cloud.key -out ganjaking_cloud.csr
 openssl req -new -newkey rsa:2048 -nodes -keyout ganjaking_asia.key -out ganjaking_asia.csr
+
+docker run --rm -v portainer_data:/data portainer/helper-reset-password
 
