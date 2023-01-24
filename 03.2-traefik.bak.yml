@@ -1,17 +1,5 @@
 version: '3.8'
 
-secrets:
-  authelia_jwt_secret:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_jwt_secret
-  authelia_session_secret:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_session_secret
-  authelia_storage_mysql_password:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_storage_mysql_password
-  authelia_notifier_smtp_password:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_notifier_smtp_password
-  authelia_session_redis_password:
-    file: /opt/sync/dk/authelia_data/secrets/authelia_session_redis_password
-
 services:
   #created-in: portainer
   traefik:
@@ -34,7 +22,7 @@ services:
       - --api.dashboard=true
       - --api.insecure=true
       - --log=true
-      - --log.level=WARN
+      - --log.level=INFO
       - --accessLog=true
       - --accessLog.filePath=/traefik.log
       - --accessLog.bufferingSize=100
@@ -42,6 +30,7 @@ services:
       - --providers.docker=true
       - --providers.docker.watch=true
       - --providers.providersThrottleDuration=2s
+      - --providers.file.directory=/certs/
       - --providers.docker.endpoint=unix:///var/run/docker.sock
       - --providers.docker.exposedByDefault=false
       - --entrypoints.https.http.tls.options=tls-opts@file
@@ -51,15 +40,14 @@ services:
       - --providers.docker.network=traefik_proxy
       - --providers.docker.swarmMode=true
       - --providers.docker.swarmModeRefreshSeconds=15s
-      - --constraint=node.role==manager
       - --providers.docker.defaultRule=Host("${DOMAINNAME}")
       - --providers.file.directory=/rules
       - --providers.file.watch=true
-      #- --certificatesResolvers.dns-cloudflare.acme.email=${CLOUDFLARE_EMAIL}
-      #- --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
-      #- --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
-      #- --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
-      #- --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
+      - --certificatesResolvers.dns-cloudflare.acme.email=${CLOUDFLARE_EMAIL}
+      - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
     environment:
       - CF_API_EMAIL=${CLOUDFLARE_EMAIL}
       - CF_API_KEY=${CLOUDFLARE_API_KEY}
@@ -84,12 +72,12 @@ services:
       - traefik_rules:/rules
       - /opt/sync/dk/traefik_data/acme/acme.json:/acme.json
       - /opt/sync/dk/traefik_data/log/traefik.log:/traefik.log
-      - traefik_certs:/certs/
+      - traefik_certs:/certs
     labels:
       - "traefik.enable=true"
       # HTTP Routers
       - "traefik.http.routers.traefik-rtr.entrypoints=https"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`${DOMAINNAME0}`)"
+      - "traefik.http.routers.traefik-rtr.rule=Host(`${DOMAINNAME}/traefik`)"
       - "traefik.http.routers.traefik-rtr.service=api@internal"
       - "traefik.http.routers.traefik-rtr.priority=10"
       # HTTP-to-HTTPS Redirect
@@ -98,15 +86,15 @@ services:
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       ## Middlewares
-      - "traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file"
+      #- "traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file"
       - "traefik.http.middlewares.traefik-headers.headers.accesscontrolallowmethods=GET, OPTIONS, PUT"
-      #- "traefik.http.middlewares.traefik-headers.headers.accesscontrolalloworiginlist=https://${DOMAINNAME}"
+      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolalloworiginlist=https://${DOMAINNAME}"
       - "traefik.http.middlewares.traefik-headers.headers.accesscontrolmaxage=100"
       - "traefik.http.middlewares.traefik-headers.headers.addvaryheader=true"
       - "traefik.http.middlewares.traefik-headers.headers.allowedhosts=${DOMAINNAME}"
       - "traefik.http.middlewares.traefik-headers.headers.hostsproxyheaders=X-Forwarded-Host"
       - "traefik.http.middlewares.traefik-headers.headers.sslredirect=true"
-      #- "traefik.http.middlewares.traefik-headers.headers.sslhost=${DOMAINNAME}/traefik"
+      - "traefik.http.middlewares.traefik-headers.headers.sslhost=${DOMAINNAME}/traefik"
       - "traefik.http.middlewares.traefik-headers.headers.sslforcehost=true"
       - "traefik.http.middlewares.traefik-headers.headers.sslproxyheaders.X-Forwarded-Proto=https"
       - "traefik.http.middlewares.traefik-headers.headers.stsseconds=63072000"
@@ -119,6 +107,13 @@ services:
       - "traefik.http.middlewares.traefik-headers.headers.referrerpolicy=same-origin"
       - "traefik.http.middlewares.traefik-headers.headers.featurepolicy=camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';"
       - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Robots-Tag=none,noarchive,nosnippet,notranslate,noimageindex,"
+      - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
+      ## API Forward Auth Bypass #
+      - "traefik.http.routers.traefik-bypass.entrypoints=https"
+      - "traefik.http.routers.traefik-bypass.rule=Host(`$DOMAINNAME/traefik`) && PathPrefix(`/api/`)"
+      - "traefik.http.routers.traefik-bypass.middlewares=traefik-headers,traefik-basicauth,rate-limit@file"
+      - "traefik.http.routers.traefik-bypass.priority=20"
+      - "traefik.http.routers.traefik-bypass.service=api@internal"
 
   #created-in: portainer
   oauth:
@@ -151,49 +146,10 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.oauth-rtr.tls=true"
       - "traefik.http.routers.oauth-rtr.entrypoints=https"
-      - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.${DOMAINNAME}`)"
+      - "traefik.http.routers.oauth-rtr.rule=Host(`${DOMAINNAME}/oauth`)"
       - "traefik.http.routers.oauth-rtr.middlewares=secure-chain@file,rate-limit@file"
       - "traefik.http.routers.oauth-rtr.service=oauth-svc"
       - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
-
-  authelia:
-    image: authelia/authelia:latest
-    networks:
-      - proxy
-    ports:
-      - "9091:9091"
-    volumes:
-      - authelia_data:/config:rw
-      - authelia_secrets:/secrets:rw
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-master ]
-        max_replicas_per_node: 1
-    environment:
-      - PUID="1001"
-      - PGID="1001"
-      - TZ=Asia/Singapore
-      - AUTHELIA_JWT_SECRET_FILE=/run/secrets/authelia_jwt_secret
-      - AUTHELIA_SESSION_SECRET_FILE=/run/secrets/authelia_session_secret
-      - AUTHELIA_STORAGE_MYSQL_PASSWORD_FILE=/run/secrets/authelia_storage_mysql_password
-      - AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE=/run/secrets/authelia_notifier_smtp_password
-      - AUTHELIA_SESSION_REDIS_PASSWORD_FILE=/run/secrets/authelia_session_redis_password
-    secrets:
-      - authelia_jwt_secret
-      - authelia_session_secret
-      - authelia_storage_mysql_password
-      - authelia_notifier_smtp_password
-      - authelia_session_redis_password
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.authelia-rtr.entrypoints=https"
-      - "traefik.http.routers.authelia-rtr.rule=Host(`authelia.${DOMAINNAME}`)"
-      - "traefik.http.routers.authelia-rtr.tls=true"
-      - "traefik.http.routers.authelia-rtr.middlewares=chain-authelia@file"
-      - "traefik.http.routers.authelia-rtr.service=authelia-svc"
-      - "traefik.http.services.authelia-svc.loadbalancer.server.port=9091"
 
 networks:
   proxy:

@@ -3,7 +3,8 @@ version: '3.8'
 services:
   #created-in: portainer
   traefik:
-    image: traefik:2.6
+    image: traefik:latest
+    restart: unless-stopped
     deploy:
       mode: replicated
       replicas: 1
@@ -11,48 +12,14 @@ services:
         constraints: [node.labels.name == unison-master]
       update_config:
         parallelism: 1
-    command:
-      - --global.checkNewVersion=true
-      - --global.sendAnonymousUsage=false
-      - --entryPoints.http.address=:80
-      - --entryPoints.http.http.redirections.entryPoint.to=https
-      - --entryPoints.https.address=:443
-      - --entryPoints.traefik.address=:8080
-      - --api=true
-      - --api.dashboard=true
-      - --api.insecure=true
-      - --log=true
-      - --log.level=INFO
-      - --accessLog=true
-      - --accessLog.filePath=/traefik.log
-      - --accessLog.bufferingSize=100
-      - --accessLog.filters.statusCodes=400-499
-      - --providers.docker=true
-      - --providers.docker.watch=true
-      - --providers.providersThrottleDuration=2s
-      - --providers.file.directory=/certs/
-      - --providers.docker.endpoint=unix:///var/run/docker.sock
-      - --providers.docker.exposedByDefault=false
-      - --entrypoints.https.http.tls.options=tls-opts@file
-      - --entrypoints.https.http.tls.certresolver=dns-cloudflare
-      #- --entrypoints.https.http.tls.domains[0].main=${DOMAINNAME0}
-      #- --entrypoints.https.http.tls.domains[0].sans=*.${DOMAINNAME0}
-      - --providers.docker.network=traefik_proxy
-      - --providers.docker.swarmMode=true
-      - --providers.docker.swarmModeRefreshSeconds=15s
-      - --providers.docker.defaultRule=Host("${DOMAINNAME}")
-      - --providers.file.directory=/rules
-      - --providers.file.watch=true
-      - --certificatesResolvers.dns-cloudflare.acme.email=${CLOUDFLARE_EMAIL}
-      - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
-      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
-      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
-      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
     environment:
-      - CF_API_EMAIL=${CLOUDFLARE_EMAIL}
-      - CF_API_KEY=${CLOUDFLARE_API_KEY}
-    networks:
-      - proxy
+      #- CF_API_EMAIL=${CLOUDFLARE_EMAIL}
+      #- CF_API_KEY=${CLOUDFLARE_API_KEY}
+      - GCE_PROJECT= ${GCE_PROJECT}
+      #- GCE_SERVICE_ACCOUNT=/run/secrets/gcp_service_account
+      - "GCE_SERVICE_ACCOUNT_FILE=/opt/sync/dk/traefik_data/gcloud.json:/gcloud.json"
+  networks:
+      - traefik_proxy
     ports:
       - target: 80
         published: 80
@@ -69,15 +36,17 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
-      - traefik_rules:/rules
-      - /opt/sync/dk/traefik_data/acme/acme.json:/acme.json
-      - /opt/sync/dk/traefik_data/log/traefik.log:/traefik.log
-      - traefik_certs:/certs
+      - /opt/sync/dk/traefik_data/traefik.yml:/traefik.yml:ro
+      - /opt/sync/dk/traefik_data/acme.json:/acme.json:ro
+      - /opt/sync/dk/traefik_data/config.yml:/config.yml:ro
+      #- /opt/sync/dk/traefik_data/log/traefik.log:/traefik.log
+      #- traefik_certs:/certs
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.ganjaking.cloud`)"
       # HTTP Routers
       - "traefik.http.routers.traefik-rtr.entrypoints=https"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`${DOMAINNAME}/traefik`)"
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.ganjaking.cloud`)"
       - "traefik.http.routers.traefik-rtr.service=api@internal"
       - "traefik.http.routers.traefik-rtr.priority=10"
       # HTTP-to-HTTPS Redirect
@@ -85,16 +54,17 @@ services:
       - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:BASIC_AUTH_PASSWORD"
       ## Middlewares
       #- "traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file"
       - "traefik.http.middlewares.traefik-headers.headers.accesscontrolallowmethods=GET, OPTIONS, PUT"
-      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolalloworiginlist=https://${DOMAINNAME}"
+      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolalloworiginlist=https://traefik.ganjaking.cloud"
       - "traefik.http.middlewares.traefik-headers.headers.accesscontrolmaxage=100"
       - "traefik.http.middlewares.traefik-headers.headers.addvaryheader=true"
-      - "traefik.http.middlewares.traefik-headers.headers.allowedhosts=${DOMAINNAME}"
+      - "traefik.http.middlewares.traefik-headers.headers.allowedhosts=traefik.ganjaking.cloud"
       - "traefik.http.middlewares.traefik-headers.headers.hostsproxyheaders=X-Forwarded-Host"
       - "traefik.http.middlewares.traefik-headers.headers.sslredirect=true"
-      - "traefik.http.middlewares.traefik-headers.headers.sslhost=${DOMAINNAME}/traefik"
+      - "traefik.http.middlewares.traefik-headers.headers.sslhost=traefik.ganjaking.cloud"
       - "traefik.http.middlewares.traefik-headers.headers.sslforcehost=true"
       - "traefik.http.middlewares.traefik-headers.headers.sslproxyheaders.X-Forwarded-Proto=https"
       - "traefik.http.middlewares.traefik-headers.headers.stsseconds=63072000"
@@ -110,75 +80,22 @@ services:
       - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
       ## API Forward Auth Bypass #
       - "traefik.http.routers.traefik-bypass.entrypoints=https"
-      - "traefik.http.routers.traefik-bypass.rule=Host(`$DOMAINNAME/traefik`) && PathPrefix(`/api/`)"
-      - "traefik.http.routers.traefik-bypass.middlewares=traefik-headers,traefik-basicauth,rate-limit@file"
+      - "traefik.http.routers.traefik-bypass.rule=Host(`traefik.ganjaking.cloud`)"
+      - "traefik.http.routers.traefik-bypass.middlewares=traefik-auth"
       - "traefik.http.routers.traefik-bypass.priority=20"
       - "traefik.http.routers.traefik-bypass.service=api@internal"
-
-  #created-in: portainer
-  oauth:
-    image: thomseddon/traefik-forward-auth:latest
-    networks:
-      - proxy
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-master]
-        max_replicas_per_node: 1
-      update_config:
-        parallelism: 1
-    environment:
-      - PROVIDERS_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - SECRET=${GOOGLE_OAUTH_SECRET}
-      - COOKIE_DOMAIN=${DOMAINNAME}
-      - INSECURE_COOKIE=false
-      - AUTH_HOST=oauth.${DOMAINNAME}
-      - URL_PATH=/_oauth
-      - WHITELIST=${MY_EMAIL}
-      - LOG_LEVEL=warn
-      - LOG_FORMAT=text
-      - LIFETIME=2592000 # 30 days
-      - DEFAULT_ACTION=auth
-      - DEFAULT_PROVIDER=google
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.oauth-rtr.tls=true"
-      - "traefik.http.routers.oauth-rtr.entrypoints=https"
-      - "traefik.http.routers.oauth-rtr.rule=Host(`${DOMAINNAME}/oauth`)"
-      - "traefik.http.routers.oauth-rtr.middlewares=secure-chain@file,rate-limit@file"
-      - "traefik.http.routers.oauth-rtr.service=oauth-svc"
-      - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
+      - "traefik.http.routers.traefik-bypass.tls=true"
+      - "traefik.http.routers.traefik-bypass.tls.certresolver=gcloud"
+      - "traefik.http.routers.traefik-bypass.tls.domains[0].main=ganjaking.cloud"
+      - "traefik.http.routers.traefik-bypass.tls.domains[0].sans=*.ganjaking.cloud"
 
 networks:
-  proxy:
-    attachable: true
-  docker_socket:
-    external: true
+    traefik_proxy:
+      external: true
+      attachable: true
 
 volumes:
-  authelia_data:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/authelia_data
-  authelia_secrets:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/authelia_secrets
-  traefik_rules:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data/rules
-  traefik_log:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data/log
   traefik_data:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/dk/traefik_data
-  traefik_certs:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data/certs
