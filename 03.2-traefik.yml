@@ -1,4 +1,7 @@
 version: '3.8'
+#docker network create --driver overlay --opt encrypted --scope swarm --attachable  traefik-network
+#docker secret create ganjaking-cloud.crt /opt/sync/dk/traefik_data/certs/ganjaking-cloud.crt
+#docker secret create ganjaking-cloud.key /opt/sync/dk/traefik_data/certs/ganjaking-cloud.key
 
 x-default-opts:
   &default-opts
@@ -21,7 +24,7 @@ services:
   #created-in: portainer
   traefik:
     <<: *default-opts
-    image: traefik:v2.9
+    image: traefik:latest
     restart: unless-stopped
     deploy:
       mode: replicated
@@ -59,6 +62,7 @@ services:
       - "--entryPoints.ping.address=:8082"
       - "--entryPoints.http.address=:80"
       - "--entryPoints.https.address=:443"
+      - "--entryPoints.api.address=:8080"
       - "--providers.docker=true"
       - "--providers.docker.watch=true"
       - "--providers.docker.swarmMode=true"
@@ -66,21 +70,19 @@ services:
       - "--providers.docker.network=traefik-network"
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
       - "--providers.docker.exposedByDefault=false"
-      - "--providers.file.filename=/etc/traefik/traefik-dynamic-configuration.yml"
+      - "--providers.file.filename=/etc/traefik/configs/traefik-dynamic-configuration.yml"
       - "--metrics.prometheus=true"
       - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
       - "--global.checkNewVersion=true"
       - "--global.sendAnonymousUsage=false"
+      - "--log.filePath=/etc/traefik/log/traefik.log"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
-      - /opt/sync/dk/traefik_data/acme.json:/acme.json:rw
-      - /opt/sync/dk/traefik_data/traefik-dynamic-configuration.yml:/traefik-dynamic-configuration.yml:rw
-      - /opt/sync/dk/traefik_data/traefik.log:/traefik.log
-      - /opt/sync/dk/traefik_data/certs/:/certs
-    #configs:
-      #- source: traefik-dynamic-configuration.yml
-        #target: /etc/traefik/configs/traefik-dynamic-configuration.yml
+      - /opt/sync/dk/traefik_data/acme/acme.json:/etc/traefik/acme/acme.json:rw
+      - /opt/sync/dk/traefik_data/traefik-dynamic-configuration.yml:/etc/traefik/configs/traefik-dynamic-configuration.yml:rw
+      - /opt/sync/dk/traefik_data/log/traefik.log:/etc/traefik/log/traefik.log
+      - /opt/sync/dk/traefik_data/certs/:/etc/traefik/certs/
     secrets:
       - ganjaking-cloud.crt
       - ganjaking-cloud.key
@@ -91,24 +93,22 @@ services:
       retries: 3
       start_period: 5s
     labels:
-      # HTTP Routers
       - "traefik.enable=true"
+      # Traefik URL (replace with yours)
       - "traefik.http.routers.dashboard.rule=Host(`traefik.ganjaking.cloud`)"
       - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=https"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
-      - "traefik.http.services.dashboard.priority=10"
       - "traefik.http.routers.dashboard.tls=true"
       - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dashboard.loadblancer.passhostheader=true"
+      - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
       - "traefik.http.routers.dashboard.middlewares=authtraefik"
-      # HTTP-to-HTTPS Redirect
-      - "traefik.http.routers.http-catchall.entrypoints=http"
       - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       # Middlewares
-      - "traefik.http.middlewares.authtraefik.basicauth.users=traefik-admin:$argon2i$v=19$m=65536,t=4,p=1$eVR4a0c0WFB1aG9Rbm5Icw$vuPBvV0dgnxnSn5rmfaBj/SIV8CpPf73IDkCAjtENGE"
+      - "traefik.http.middlewares.authtraefik.basicauth.users=admin:$2y$10$un1H3fzow1QRYZkQHHKQV.Mj5NQ9JhZFS4T5L/MibcGAJlrGabbMi"
 
 volumes:
   traefik_data:
@@ -118,4 +118,4 @@ volumes:
   traefik_certs:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/sync/dk/trafik_data/certs
+      mountpoint: /opt/sync/dk/traefik_data/certs

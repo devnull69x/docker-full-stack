@@ -1,184 +1,34 @@
-version: '3.8'
+echo '
+version: "3.9"
 
 services:
-  #created-in: portainer
-  traefik:
-    image: traefik:2.6
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-master]
-      update_config:
-        parallelism: 1
+  # Start the agent with the latest version
+  hub-agent:
+    hostname: hub-agent
+    image: ghcr.io/traefik/hub-agent-traefik:v1.0.0
+    pull_policy: always
     command:
-      - --global.checkNewVersion=true
-      - --global.sendAnonymousUsage=false
-      - --entryPoints.http.address=:80
-      - --entryPoints.http.http.redirections.entryPoint.to=https
-      - --entryPoints.https.address=:443
-      - --entryPoints.traefik.address=:8080
-      - --api=true
-      - --api.dashboard=true
-      - --api.insecure=true
-      - --log=true
-      - --log.level=INFO
-      - --accessLog=true
-      - --accessLog.filePath=/traefik.log
-      - --accessLog.bufferingSize=100
-      - --accessLog.filters.statusCodes=400-499
-      - --providers.docker=true
-      - --providers.docker.watch=true
-      - --providers.providersThrottleDuration=2s
-      - --providers.file.directory=/certs/
-      - --providers.docker.endpoint=unix:///var/run/docker.sock
-      - --providers.docker.exposedByDefault=false
-      - --entrypoints.https.http.tls.options=tls-opts@file
-      - --entrypoints.https.http.tls.certresolver=dns-cloudflare
-      #- --entrypoints.https.http.tls.domains[0].main=${DOMAINNAME0}
-      #- --entrypoints.https.http.tls.domains[0].sans=*.${DOMAINNAME0}
-      - --providers.docker.network=traefik_proxy
-      - --providers.docker.swarmMode=true
-      - --providers.docker.swarmModeRefreshSeconds=15s
-      - --providers.docker.defaultRule=Host("${DOMAINNAME}")
-      - --providers.file.directory=/rules
-      - --providers.file.watch=true
-      - --certificatesResolvers.dns-cloudflare.acme.email=${CLOUDFLARE_EMAIL}
-      - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
-      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
-      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
-      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
-    environment:
-      - CF_API_EMAIL=${CLOUDFLARE_EMAIL}
-      - CF_API_KEY=${CLOUDFLARE_API_KEY}
-    networks:
-      - proxy
-    ports:
-      - target: 80
-        published: 80
-        protocol: tcp
-        mode: host
-      - target: 443
-        published: 443
-        protocol: tcp
-        mode: host
-      - target: 8080
-        published: 8080
-        protocol: tcp
-        mode: host
+      - run
+      - --hub.token=2a481c21-4568-40a4-bbd5-5568116f0033
+      - --auth-server.advertise-url=http://hub-agent
+      - --traefik.host=traefik
+      - --traefik.docker.swarm-mode
+      - --traefik.tls.insecure=true
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /etc/localtime:/etc/localtime:ro
-      - traefik_rules:/rules
-      - /opt/sync/dk/traefik_data/acme/acme.json:/acme.json
-      - /opt/sync/dk/traefik_data/log/traefik.log:/traefik.log
-      - traefik_certs:/certs
-    labels:
-      - "traefik.enable=true"
-      # HTTP Routers
-      - "traefik.http.routers.traefik-rtr.entrypoints=https"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`${DOMAINNAME}/traefik`)"
-      - "traefik.http.routers.traefik-rtr.service=api@internal"
-      - "traefik.http.routers.traefik-rtr.priority=10"
-      # HTTP-to-HTTPS Redirect
-      - "traefik.http.routers.http-catchall.entrypoints=http"
-      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      ## Middlewares
-      #- "traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file"
-      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolallowmethods=GET, OPTIONS, PUT"
-      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolalloworiginlist=https://${DOMAINNAME}"
-      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolmaxage=100"
-      - "traefik.http.middlewares.traefik-headers.headers.addvaryheader=true"
-      - "traefik.http.middlewares.traefik-headers.headers.allowedhosts=${DOMAINNAME}"
-      - "traefik.http.middlewares.traefik-headers.headers.hostsproxyheaders=X-Forwarded-Host"
-      - "traefik.http.middlewares.traefik-headers.headers.sslredirect=true"
-      - "traefik.http.middlewares.traefik-headers.headers.sslhost=${DOMAINNAME}/traefik"
-      - "traefik.http.middlewares.traefik-headers.headers.sslforcehost=true"
-      - "traefik.http.middlewares.traefik-headers.headers.sslproxyheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.traefik-headers.headers.stsseconds=63072000"
-      - "traefik.http.middlewares.traefik-headers.headers.stsincludesubdomains=true"
-      - "traefik.http.middlewares.traefik-headers.headers.stspreload=true"
-      - "traefik.http.middlewares.traefik-headers.headers.forcestsheader=true"
-      - "traefik.http.middlewares.traefik-headers.headers.framedeny=true"
-      - "traefik.http.middlewares.traefik-headers.headers.contenttypenosniff=true"
-      - "traefik.http.middlewares.traefik-headers.headers.browserxssfilter=true"
-      - "traefik.http.middlewares.traefik-headers.headers.referrerpolicy=same-origin"
-      - "traefik.http.middlewares.traefik-headers.headers.featurepolicy=camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';"
-      - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Robots-Tag=none,noarchive,nosnippet,notranslate,noimageindex,"
-      - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
-      ## API Forward Auth Bypass #
-      - "traefik.http.routers.traefik-bypass.entrypoints=https"
-      - "traefik.http.routers.traefik-bypass.rule=Host(`$DOMAINNAME/traefik`) && PathPrefix(`/api/`)"
-      - "traefik.http.routers.traefik-bypass.middlewares=traefik-headers,traefik-basicauth,rate-limit@file"
-      - "traefik.http.routers.traefik-bypass.priority=20"
-      - "traefik.http.routers.traefik-bypass.service=api@internal"
-
-  #created-in: portainer
-  oauth:
-    image: thomseddon/traefik-forward-auth:latest
-    networks:
-      - proxy
+      - /var/run/docker.sock:/var/run/docker.sock
     deploy:
-      mode: replicated
       replicas: 1
-      placement:
-        constraints: [node.labels.name == unison-master]
-        max_replicas_per_node: 1
-      update_config:
-        parallelism: 1
-    environment:
-      - PROVIDERS_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - PROVIDERS_GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - SECRET=${GOOGLE_OAUTH_SECRET}
-      - COOKIE_DOMAIN=${DOMAINNAME}
-      - INSECURE_COOKIE=false
-      - AUTH_HOST=oauth.${DOMAINNAME}
-      - URL_PATH=/_oauth
-      - WHITELIST=${MY_EMAIL}
-      - LOG_LEVEL=warn
-      - LOG_FORMAT=text
-      - LIFETIME=2592000 # 30 days
-      - DEFAULT_ACTION=auth
-      - DEFAULT_PROVIDER=google
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.oauth-rtr.tls=true"
-      - "traefik.http.routers.oauth-rtr.entrypoints=https"
-      - "traefik.http.routers.oauth-rtr.rule=Host(`${DOMAINNAME}/oauth`)"
-      - "traefik.http.routers.oauth-rtr.middlewares=secure-chain@file,rate-limit@file"
-      - "traefik.http.routers.oauth-rtr.service=oauth-svc"
-      - "traefik.http.services.oauth-svc.loadbalancer.server.port=4181"
 
-networks:
-  proxy:
-    attachable: true
-  docker_socket:
-    external: true
+  # Start Traefik with the latest version
+  traefik:
+    hostname: traefik
+    image: traefik:v2.8
+    command:
+      # Enable Hub communication (open the port 9900 and 9901 by default)
+      - --experimental.hub=true
+      - --hub.tls.insecure=true
+      - --metrics.prometheus.addrouterslabels=true
+    deploy:
+      replicas: 1
 
-volumes:
-  authelia_data:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/authelia_data
-  authelia_secrets:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/authelia_secrets
-  traefik_rules:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data/rules
-  traefik_log:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data/log
-  traefik_data:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data
-  traefik_certs:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data/certs
+' > ./docker-compose-hub-agent.yaml && docker stack deploy -c ./docker-compose-hub-agent.yaml hub-agent
