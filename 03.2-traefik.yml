@@ -1,9 +1,27 @@
 version: '3.8'
 
+x-default-opts:
+  &default-opts
+  logging:
+    options:
+      max-size: "10m"
+
+networks:
+  traefik-network:
+    external: true
+    attachable: true
+
+secrets:
+  ganjaking-cloud.crt:
+    external: true
+  ganjaking-cloud.key:
+    external: true
+
 services:
   #created-in: portainer
   traefik:
-    image: traefik:latest
+    <<: *default-opts
+    image: traefik:v2.9
     restart: unless-stopped
     deploy:
       mode: replicated
@@ -11,15 +29,13 @@ services:
       placement:
         constraints: [node.labels.name == unison-master]
       update_config:
+        delay: 15s
         parallelism: 1
-    environment:
-      #- CF_API_EMAIL=${CLOUDFLARE_EMAIL}
-      #- CF_API_KEY=${CLOUDFLARE_API_KEY}
-      - GCE_PROJECT= ${GCE_PROJECT}
-      #- GCE_SERVICE_ACCOUNT=/run/secrets/gcp_service_account
-      - "GCE_SERVICE_ACCOUNT_FILE=/opt/sync/dk/traefik_data/gcloud.json:/gcloud.json"
-  networks:
-      - traefik_proxy
+        monitor: 10s
+        failure_action: rollback
+        max_failure_ratio: 0.55
+    networks:
+      - traefik-network
     ports:
       - target: 80
         published: 80
@@ -33,69 +49,73 @@ services:
         published: 8080
         protocol: tcp
         mode: host
+    command:
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--ping=true"
+      - "--ping.entrypoint=ping"
+      - "--entryPoints.ping.address=:8082"
+      - "--entryPoints.http.address=:80"
+      - "--entryPoints.https.address=:443"
+      - "--providers.docker=true"
+      - "--providers.docker.watch=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.swarmModeRefreshSeconds=15s"
+      - "--providers.docker.network=traefik-network"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.file.filename=/etc/traefik/traefik-dynamic-configuration.yml"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
+      - "--global.checkNewVersion=true"
+      - "--global.sendAnonymousUsage=false"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
-      - /opt/sync/dk/traefik_data/traefik.yml:/traefik.yml:ro
-      - /opt/sync/dk/traefik_data/acme.json:/acme.json:ro
-      - /opt/sync/dk/traefik_data/config.yml:/config.yml:ro
-      #- /opt/sync/dk/traefik_data/log/traefik.log:/traefik.log
-      #- traefik_certs:/certs
+      - /opt/sync/dk/traefik_data/acme.json:/acme.json:rw
+      - /opt/sync/dk/traefik_data/traefik-dynamic-configuration.yml:/traefik-dynamic-configuration.yml:rw
+      - /opt/sync/dk/traefik_data/traefik.log:/traefik.log
+      - /opt/sync/dk/traefik_data/certs/:/certs
+    #configs:
+      #- source: traefik-dynamic-configuration.yml
+        #target: /etc/traefik/configs/traefik-dynamic-configuration.yml
+    secrets:
+      - ganjaking-cloud.crt
+      - ganjaking-cloud.key
+    healthcheck:
+      test: ["CMD", "wget", "http://localhost:8082/ping", "--spider"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.ganjaking.cloud`)"
       # HTTP Routers
-      - "traefik.http.routers.traefik-rtr.entrypoints=https"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.ganjaking.cloud`)"
-      - "traefik.http.routers.traefik-rtr.service=api@internal"
-      - "traefik.http.routers.traefik-rtr.priority=10"
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.ganjaking.cloud`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=https"
+      - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
+      - "traefik.http.services.dashboard.priority=10"
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dashboard.loadblancer.passhostheader=true"
+      - "traefik.http.routers.dashboard.middlewares=authtraefik"
       # HTTP-to-HTTPS Redirect
       - "traefik.http.routers.http-catchall.entrypoints=http"
       - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:BASIC_AUTH_PASSWORD"
-      ## Middlewares
-      #- "traefik.http.routers.traefik-rtr.middlewares=chain-oauth@file"
-      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolallowmethods=GET, OPTIONS, PUT"
-      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolalloworiginlist=https://traefik.ganjaking.cloud"
-      - "traefik.http.middlewares.traefik-headers.headers.accesscontrolmaxage=100"
-      - "traefik.http.middlewares.traefik-headers.headers.addvaryheader=true"
-      - "traefik.http.middlewares.traefik-headers.headers.allowedhosts=traefik.ganjaking.cloud"
-      - "traefik.http.middlewares.traefik-headers.headers.hostsproxyheaders=X-Forwarded-Host"
-      - "traefik.http.middlewares.traefik-headers.headers.sslredirect=true"
-      - "traefik.http.middlewares.traefik-headers.headers.sslhost=traefik.ganjaking.cloud"
-      - "traefik.http.middlewares.traefik-headers.headers.sslforcehost=true"
-      - "traefik.http.middlewares.traefik-headers.headers.sslproxyheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.traefik-headers.headers.stsseconds=63072000"
-      - "traefik.http.middlewares.traefik-headers.headers.stsincludesubdomains=true"
-      - "traefik.http.middlewares.traefik-headers.headers.stspreload=true"
-      - "traefik.http.middlewares.traefik-headers.headers.forcestsheader=true"
-      - "traefik.http.middlewares.traefik-headers.headers.framedeny=true"
-      - "traefik.http.middlewares.traefik-headers.headers.contenttypenosniff=true"
-      - "traefik.http.middlewares.traefik-headers.headers.browserxssfilter=true"
-      - "traefik.http.middlewares.traefik-headers.headers.referrerpolicy=same-origin"
-      - "traefik.http.middlewares.traefik-headers.headers.featurepolicy=camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';"
-      - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Robots-Tag=none,noarchive,nosnippet,notranslate,noimageindex,"
-      - "traefik.http.middlewares.traefik-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
-      ## API Forward Auth Bypass #
-      - "traefik.http.routers.traefik-bypass.entrypoints=https"
-      - "traefik.http.routers.traefik-bypass.rule=Host(`traefik.ganjaking.cloud`)"
-      - "traefik.http.routers.traefik-bypass.middlewares=traefik-auth"
-      - "traefik.http.routers.traefik-bypass.priority=20"
-      - "traefik.http.routers.traefik-bypass.service=api@internal"
-      - "traefik.http.routers.traefik-bypass.tls=true"
-      - "traefik.http.routers.traefik-bypass.tls.certresolver=gcloud"
-      - "traefik.http.routers.traefik-bypass.tls.domains[0].main=ganjaking.cloud"
-      - "traefik.http.routers.traefik-bypass.tls.domains[0].sans=*.ganjaking.cloud"
-
-networks:
-    traefik_proxy:
-      external: true
-      attachable: true
+      # Middlewares
+      - "traefik.http.middlewares.authtraefik.basicauth.users=traefik-admin:$argon2i$v=19$m=65536,t=4,p=1$eVR4a0c0WFB1aG9Rbm5Icw$vuPBvV0dgnxnSn5rmfaBj/SIV8CpPf73IDkCAjtENGE"
 
 volumes:
   traefik_data:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/dk/traefik_data
+  traefik_certs:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/dk/trafik_data/certs
