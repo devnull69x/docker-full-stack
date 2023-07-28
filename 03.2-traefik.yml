@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 #docker network create --driver overlay --opt encrypted --scope swarm --attachable  traefik-network
 #docker secret create ganjaking-cloud.crt /opt/sync/dk/traefik_data/certs/ganjaking-cloud.crt
 #docker secret create ganjaking-cloud.key /opt/sync/dk/traefik_data/certs/ganjaking-cloud.key
@@ -13,12 +13,6 @@ networks:
   traefik-network:
     external: true
     attachable: true
-
-secrets:
-  ganjaking-cloud.crt:
-    external: true
-  ganjaking-cloud.key:
-    external: true
 
 services:
   #created-in: portainer
@@ -62,7 +56,6 @@ services:
       - "--entryPoints.ping.address=:8082"
       - "--entryPoints.http.address=:80"
       - "--entryPoints.https.address=:443"
-      - "--entryPoints.api.address=:8080"
       - "--providers.docker=true"
       - "--providers.docker.watch=true"
       - "--providers.docker.swarmMode=true"
@@ -83,9 +76,6 @@ services:
       - /opt/sync/dk/traefik_data/traefik-dynamic-configuration.yml:/etc/traefik/configs/traefik-dynamic-configuration.yml:rw
       - /opt/sync/dk/traefik_data/log/traefik.log:/etc/traefik/log/traefik.log
       - /opt/sync/dk/traefik_data/certs/:/etc/traefik/certs/
-    secrets:
-      - ganjaking-cloud.crt
-      - ganjaking-cloud.key
     healthcheck:
       test: ["CMD", "wget", "http://localhost:8082/ping", "--spider"]
       interval: 10s
@@ -95,20 +85,25 @@ services:
     labels:
       - "traefik.enable=true"
       # Traefik URL (replace with yours)
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.ganjaking.cloud`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
-      - "traefik.http.routers.dashboard.tls=true"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
-      - "traefik.http.routers.dashboard.middlewares=authtraefik"
-      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      # Middlewares
-      - "traefik.http.middlewares.authtraefik.basicauth.users=admin:$2y$10$un1H3fzow1QRYZkQHHKQV.Mj5NQ9JhZFS4T5L/MibcGAJlrGabbMi"
+      - "traefik.http.routers.traefi.rule: Host(`traefik.ganjaking.cloud`)"
+      - "traefik.http.routers.traefi.entrypoints: web"
+      - "traefik.http.routers.traefi.middlewares: https_redirect"
+      - "traefik.http.routers.traefik.rule: Host(`traefik.ganjaking.cloud`)"
+      - "traefik.http.routers.traefik.entrypoints: websecure"
+      - "traefik.http.routers.traefik.tls: true"
+      - "traefik.http.middlewares.https_redirect.redirectscheme.scheme: https"
+      - "traefik.http.middlewares.https_redirect.redirectscheme.permanent: true"
+
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.stls.certresolver=letsencrypt"
+      - "traefik.http.services.traefik.loadbalancer.passhostheader=true"
+      - "traefik.http.routers.traefik.middlewares=authtraefik"
+      - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$2y$$10$$sMzJfirKC75x/hVpiINeZOiSm.Jkity9cn4KwNkRvO7hSQVFc5FLO"
+
+
 
 volumes:
   traefik_data:

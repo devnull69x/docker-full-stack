@@ -1,15 +1,32 @@
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entrypoint:
+          to: websecure
+          scheme: https
+
+  websecure:
+    address: ":443"
+
 http:
   routers:
     traefik:
-      rule: "Host(`traefik.ganjaking.cloud`)"
-      service: traefik
+      rule: "Host(`traefik.ganjaking.cloud`)"  && Path(`/traefik/`)"
+      service: traefik-service
       tls:
         options: myTLSOptions
 
 tls:
   certificates:
-    - certFile: /run/secrets/ganjaking-cloud.crt
-      keyFile: /run/secrets/ganjaking-cloud.key
+    - certFile: /opt/sync/dk/traefik_data/certs/ganjaking-cloud.crt
+      keyFile: /opt/sync/dk/traefik_data/certs/ganjaking-cloud.key
+      stores:
+        default:
+          defaultCertificate:
+            certFile: /opt/sync/dk/traefik_data/certs/ganjaking-cloud.crt
+            keyFile: /opt/sync/dk/traefik_data/certs/ganjaking-cloud.key
   options:
     myTLSOptions:
       minVersion: VersionTLS12
