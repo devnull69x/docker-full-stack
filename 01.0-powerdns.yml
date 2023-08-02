@@ -1,21 +1,22 @@
 version: '3.8'
 
 services:
-#created-in: docker stack deploy -c 01.0-powerdns.yml portal
+#created-in: docker stack deploy -c 01.0-powerdns.yml pdns
   mysqldb:
-    image: maridb:lastest
-    restart: always
+    image: mariadb:latest
     deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints: [node.labels.name == dns-master]
+      restart_policy:
+        condition: on-failure
     ports:
       - "3306:3306"
     volumes:
-      - /opt/mysql_db: /var/lib/mysql
+      - /opt/mysql_db:/var/lib/mysql
     networks:
-      - portal_default
+      - default
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=no
       - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -24,16 +25,32 @@ services:
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
-  pdns:
-    image: pschiffe/pdns-mysql:latest
-    restart: always
+  phpmyadmin:
+    image: phpmyadmin:latest
     deploy:
       mode: replicated
       replicas: 1
       placement:
-        constraint: [node.labels.name == dns-master]
-    hostname: pdns
-    domainname: ${DOMAINNAME}
+        constraints: [node.labels.name == dns-master]
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "8079:80"
+    networks:
+      - default
+    environment:
+      - PM_ARBITRARY=1
+      - PMA_HOST=mysqldb
+
+  pdns:
+    image: pschiffe/pdns-mysql:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == dns-master]
+      restart_policy:
+        condition: on-failure
     depends_on:
       - mysqldb
     links:
@@ -43,7 +60,7 @@ services:
       - "53:53/udp"
       - "8081:8081"
     networks:
-      - portal_default
+      - default
     environment:
       - PDNS_gmysql_host=mysqldb
       - PDNS_gmysql_port=3306
@@ -63,17 +80,18 @@ services:
       - PDNS_allow_axfr_ips=127.0.0.1
 
   pdns_admin:
-    image: powerdnsadmin/pda-legacy:lastest
-    restart: always
+    image: powerdnsadmin/pda-legacy:latest
     deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints: [node.labels.name == dns-master]
+      restart_policy:
+        condition: on-failure
     ports:
       - "8080:80"
     networks:
-      - portal_default
+      - default
     depends_on:
       - mysqldb
     restart: always
@@ -85,8 +103,10 @@ services:
       options:
         max-size: 50m
     environment:
-      - SSQLALCHEMY_DATABASE_URI=mysqldb://pdns:${MYSQL_PASSWORD}@mysql/${MYSQL_DATABASE}
+      - SQLALCHEMY_DATABASE_URI=mysqldb://${MYSQL_USER}:${MYSQL_PASSWORD}@mysqldb/${MYSQL_DATABASE}
       - GUNICORN_TIMEOUT=60
       - GUNICORN_WORKERS=2
       - GUNICORN_LOGLEVEL=DEBUG
-
+      - GUNICORN_LOG_LEVEL=WARN
+      - LOG_LEVEL=WARN
+      - OFFLINE_MODE=False
