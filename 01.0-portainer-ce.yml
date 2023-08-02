@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  #created-in: docker stack deploy -c 01.0-portainer.yml porta
+  #created-in: docker stack deploy -c 01.0-portainer-ce.yml porta
   portainer:
     image: portainer/portainer-ce:latest
     command: -H tcp://tasks.agent:9001 --tlsskipverify

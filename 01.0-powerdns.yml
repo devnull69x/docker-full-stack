@@ -15,7 +15,7 @@ services:
     volumes:
       - /opt/mysql_db: /var/lib/mysql
     networks:
-      - portal
+      - portal_default
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=no
       - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -42,6 +42,8 @@ services:
       - "53:53"
       - "53:53/udp"
       - "8081:8081"
+    networks:
+      - portal_default
     environment:
       - PDNS_gmysql_host=mysqldb
       - PDNS_gmysql_port=3306
@@ -70,6 +72,8 @@ services:
         constraints: [node.labels.name == dns-master]
     ports:
       - "8080:80"
+    networks:
+      - portal_default
     depends_on:
       - mysqldb
     restart: always
