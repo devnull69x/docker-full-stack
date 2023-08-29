@@ -21,7 +21,8 @@ services:
       update_config:
         parallelism: 1
     labels:
-      - io.portainer.accesscontrol.public
+      - io.portainer.accesscontrol.teams: prod
+      - io.portainer.accesscontrol.users: admin1
 
   portainer:
     image: portainer/portainer-ee:latest
@@ -41,7 +42,8 @@ services:
     networks:
       - agent_network
     labels:
-      - io.portainer.accesscontrol.public
+      - io.portainer.accesscontrol.teams: prod
+      - io.portainer.accesscontrol.users: admin1
 
 networks:
   agent_network:
