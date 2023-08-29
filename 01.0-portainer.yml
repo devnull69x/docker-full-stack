@@ -21,7 +21,7 @@ services:
       update_config:
         parallelism: 1
     labels:
-      - io.portainer.accesscontrol.users: admin
+      - io.portainer.accesscontrol.public
 
   portainer:
     image: portainer/portainer-ee:latest
@@ -41,8 +41,7 @@ services:
     networks:
       - agent_network
     labels:
-      #- "deunhealth.restart.on.unhealthy=true"
-      - io.portainer.accesscontrol.users: admin
+      - io.portainer.accesscontrol.public
 
 networks:
   agent_network:
