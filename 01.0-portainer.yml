@@ -13,15 +13,13 @@ services:
         protocol: tcp
         mode: host
     networks:
-      - agent_network
+      - websecured
     deploy:
       mode: global
       placement:
         max_replicas_per_node: 1
       update_config:
         parallelism: 1
-    labels:
-      - "io.portainer.accesscontrol.public"
 
   portainer:
     image: portainer/portainer-ee:latest
@@ -39,12 +37,10 @@ services:
       - /opt/portainer_data:/data:rw
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - agent_network
-    labels:
-      - "io.portainer.accesscontrol.public"
+      - websecured
 
 networks:
-  agent_network:
+  websecured:
     driver: overlay
     attachable: true
 
