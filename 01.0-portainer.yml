@@ -21,7 +21,7 @@ services:
       update_config:
         parallelism: 1
     labels:
-      - "deunhealth.restart.on.unhealthy=true"
+      - io.portainer.accesscontrol.users: admin
 
   portainer:
     image: portainer/portainer-ee:latest
@@ -32,16 +32,17 @@ services:
       placement:
         constraints: [node.labels.name == unison-master]
     ports:
-      - "10050:9443"
-      - "9000:9000"
-      - "8000:8000"
+      - "10051:9443"
+      #- "9000:9000"
+      #- "8000:8000"
     volumes:
       - /opt/portainer_data:/data:rw
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - agent_network
     labels:
-      - "deunhealth.restart.on.unhealthy=true"
+      #- "deunhealth.restart.on.unhealthy=true"
+      - io.portainer.accesscontrol.users: admin
 
 networks:
   agent_network:
