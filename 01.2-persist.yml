@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-
+  #created-in: docker stack deploy -c 01.2-persist.yml persist
   local-persist:
     image: cwspear/docker-local-persist-volume-plugin:latest
     volumes:

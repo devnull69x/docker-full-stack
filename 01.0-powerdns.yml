@@ -22,6 +22,7 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MARIADB_ROOT_PASSWORD=${MYSQL_PASSWORD}
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
@@ -44,6 +45,7 @@ services:
 
   pdns:
     image: pschiffe/pdns-mysql:latest
+    hostname: dns.ganjaking.cloud
     deploy:
       mode: replicated
       replicas: 1
@@ -72,6 +74,7 @@ services:
       - PDNS_api_key=${PDNS_API_KEY}
       - PDNSCONF_API_KEY={$PDNS_API_CONF_KEY}
       - PDNS_webserver=yes
+      - PDNS_webserver-allow-from=127.0.0.1,10.0.0.0/8,172.0.0.0/8,192.0.0.0/24
       - PDNS_webserver_address=0.0.0.0
       - PDNS_webserver_password=${PDNS_PASSWORD}
       - PDNS_version_string=anonymous
@@ -103,10 +106,40 @@ services:
       options:
         max-size: 50m
     environment:
-      - SQLALCHEMY_DATABASE_URI=mysqldb://${MYSQL_USER}:${MYSQL_PASSWORD}@mysqldb/${MYSQL_DATABASE}
+      - SQLALCHEMY_DATABASE_URI=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysqldb/${MYSQL_DATABASE}
       - GUNICORN_TIMEOUT=60
       - GUNICORN_WORKERS=2
       - GUNICORN_LOGLEVEL=DEBUG
       - GUNICORN_LOG_LEVEL=WARN
       - LOG_LEVEL=WARN
       - OFFLINE_MODE=False
+
+  nginxproxymanager:
+    image: jc21/nginx-proxy-manager:2.10.3
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == dns-master ]
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    networks:
+      - default
+    depends_on:
+      - mysqldb
+    restart: always
+    links:
+      - mysqldb:mysql
+    volumes:
+      - /opt/nginx-proxy-manager/data/:/data:rw
+      - /opt/nginx-proxy-manager/ssl/:/etc/letsencrypt:rw
+    environment:
+      - DB_MYSQL_HOST=mysqldb
+      - DB_MYSQL_PORT=3306
+      - DB_MYSQL_USER=${MYSQL_USER}
+      - DB_MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - DB_MYSQL_NAME=${MYSQL_DATABASE_NGINX}
