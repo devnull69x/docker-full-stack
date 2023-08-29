@@ -32,7 +32,7 @@ services:
       placement:
         constraints: [node.labels.name == unison-master]
     ports:
-      - "10051:9443"
+      - "10050:9443"
       #- "9000:9000"
       #- "8000:8000"
     volumes:
