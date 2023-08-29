@@ -44,3 +44,13 @@ S
 #.idea/sonarlint/issuestore/index.pb,9\f\9fe84ebb15faf917b7def6236dba604453cc61e0
 A
 01.0-powerdns.yml,2\f\2f8f5d66817430b34fccbd18726600864c32dab2
+B
+01.0-portainer.yml,7\3\736267098976b83c585a51fafd3ecd33914e35ad
+B
+02.0-docker-gc.yml,9\2\92fd2604879b19d89633aa3a0c9438fb4cb5867c
+@
+scratch_disk.yml,6\c\6c91ed941510591cbf8a17ef7f7a2b2d66004e12
+@
+01.2-persist.yml,8\0\801d80452b37fe36fbd23df95dc3cca0c99600ca
+E
+01.0-portainer-ce.yml,4\7\47766ab8aafd84b39b2f04243e006e1925e781cd

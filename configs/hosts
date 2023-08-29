@@ -11,6 +11,10 @@ glusterfs_deb_version = 'LATEST'
 ansible_user = 'alpine'
 ansible_python_interpreter = /usr/bin/python3
 
+[linode-prod:vars]
+ansible_user = 'alpine'
+ansible_python_interpreter = /usr/bin/python3
+
 [debian-prod]
 unison-master  ansible_host=10.148.0.100
 unison-node-0  ansible_host=10.148.0.101
@@ -31,3 +35,8 @@ unison-node-0   ansible_host=10.148.0.101
 unison-node-1   ansible_host=10.148.0.102
 unison-node-2   ansible_host=10.148.0.103
 unison-node-3   ansible_host=10.148.0.104
+
+[linode-prod]
+unison-master   ansible_host=192.168.132.16
+unison-node-0   ansible_host=192.168.148.181
+unison-node-1   ansible_host=192.168.155.14
