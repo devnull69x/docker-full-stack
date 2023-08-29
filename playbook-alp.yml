@@ -2,7 +2,7 @@
 # ansible-playbook -i configs/hosts playbook-alp.yml
 
 - name: run tasks on all hosts
-  hosts: alpine-test
+  hosts: linode-prod
   become: true
   tasks:
 
