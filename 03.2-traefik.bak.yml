@@ -9,6 +9,7 @@ x-default-opts:
 networks:
   pt_websecured:
     external: true
+    attachable: true
 
 services:
   traefik:
@@ -19,6 +20,7 @@ services:
       - "--accesslog=true"
       - "--api.dashboard=true"
       - "--api.insecure=true"
+      - "--api.debug=true"
       - "--entryPoints.http.address=:80"
       - "--entryPoints.https.address=:443"
       - "--providers.docker=true"
@@ -36,12 +38,8 @@ services:
     networks:
       - pt_websecured
     ports:
-      - target: 80
-        published: 80
-        mode: host
-      - target: 443
-        published: 443
-        mode: host
+      - "80:80"
+      - "443:443"
     volumes:
       - /opt/traefik/traefik-dynamic-configuration.yml:/etc/traefik/configs/traefik-dynamic-configuration.yml
       - /opt/traefik/certs:/certificates
