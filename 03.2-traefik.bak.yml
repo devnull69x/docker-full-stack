@@ -1,34 +1,78 @@
-echo '
-version: "3.9"
+version: '3.9'
+
+x-default-opts:
+  &default-opts
+  logging:
+    options:
+      max-size: "10m"
+
+networks:
+  pt_websecured:
+    external: true
 
 services:
-  # Start the agent with the latest version
-  hub-agent:
-    hostname: hub-agent
-    image: ghcr.io/traefik/hub-agent-traefik:v1.0.0
-    pull_policy: always
-    command:
-      - run
-      - --hub.token=2a481c21-4568-40a4-bbd5-5568116f0033
-      - --auth-server.advertise-url=http://hub-agent
-      - --traefik.host=traefik
-      - --traefik.docker.swarm-mode
-      - --traefik.tls.insecure=true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    deploy:
-      replicas: 1
-
-  # Start Traefik with the latest version
   traefik:
-    hostname: traefik
-    image: traefik:v2.8
+    <<: *default-opts
+    image: traefik:latest
     command:
-      # Enable Hub communication (open the port 9900 and 9901 by default)
-      - --experimental.hub=true
-      - --hub.tls.insecure=true
-      - --metrics.prometheus.addrouterslabels=true
+      - "--log.level=WARN"
+      - "--accesslog=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--entryPoints.http.address=:80"
+      - "--entryPoints.https.address=:443"
+      - "--providers.docker=true"
+      - "--providers.docker.watch=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.swarmModeRefreshSeconds=15s"
+      - "--providers.docker.network=pt_websecured"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.file.filename=/etc/traefik/configs/traefik-dynamic-configuration.yml"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
+      - "--global.checkNewVersion=true"
+      - "--global.sendAnonymousUsage=false"
+    networks:
+      - pt_websecured
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+    volumes:
+      - /opt/traefik/traefik-dynamic-configuration.yml:/etc/traefik/configs/traefik-dynamic-configuration.yml
+      - /opt/traefik/certs:/certificates
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
+      mode: replicated
       replicas: 1
-
-' > ./docker-compose-hub-agent.yaml && docker stack deploy -c ./docker-compose-hub-agent.yaml hub-agent
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+      update_config:
+        delay: 15s
+        parallelism: 1
+        monitor: 10s
+        failure_action: rollback
+        max_failure_ratio: 0.55
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=pt_websecured"
+        - "traefik.http.routers.dashboard.rule=Host(`traefik.ganjaking.cloud`)"
+        - "traefik.http.routers.dashboard.entrypoints=http"
+        - "traefik.http.routers.dashboard.middlewares=https-redirect"
+        - "traefik.http.routers.dashboard.entrypoints=https"
+        - "traefik.http.routers.dashboard.tls=true"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
+        - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.dashboard.middlewares=admin-auth"
+        - "traefik.http.middlewares.admin-auth.basicauth.users=admin:$$2y$$05$$L5WC/q6NDCPkZ8XOKPEl.uybq2IgimcTQ1Oy3EIBHYYJ6S.zKmSmi"
+        - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+        - "traefik.http.routers.http-catchall.entrypoints=http"
+        - "traefik.http.routers.http-catchall.middlewares=https-redirect"
+        - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"

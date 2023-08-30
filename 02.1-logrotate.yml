@@ -14,10 +14,10 @@ services:
         parallelism: 1
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers
-      - /var/log/messages:/var/log/messages
-      - logrotate_data:/logs
+      - /var/log:/var/log
+      - /opt/logrotate_data:/logs
     environment:
-      - LOGS_DIRECTORIES=/var/lib/docker/containers /var/log/docker
+      - LOGS_DIRECTORIES=/var/lib/docker/containers /var/log
       - LOG_FILE_ENDINGS=log json xml
       - LOGROTATE_INTERVAL=weekly
       - LOGROTATE_STATUSFILE=/logs/logrotate.status
@@ -36,4 +36,5 @@ services:
 
 volumes:
   logrotate_data:
-    driver: local
+    driver_opts:
+      mountpoint: /opt/logrotate_data

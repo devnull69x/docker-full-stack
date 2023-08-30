@@ -1,0 +1,4 @@
+tls:
+  certificates:
+    - certFile: /certificates/ganjaking.cloud.crt
+      keyFile: /certificates/ganjakjing.cloud.key
