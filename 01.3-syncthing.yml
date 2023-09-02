@@ -130,38 +130,6 @@ services:
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
-  node-3:
-    image: syncthing/syncthing:latest
-    depends_on:
-      - persist_local-persist
-    networks:
-      - sync
-    volumes:
-      - sync:/var/syncthing:rw
-    environment:
-      PUID: "1001"
-      PGID: "1001"
-    ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: udp
-        mode: host
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-node-3 ]
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
-
 volumes:
   sync:
     driver: local-persist

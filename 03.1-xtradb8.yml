@@ -1,0 +1,245 @@
+version: "3.9"
+
+networks:
+  xtradb:
+    driver: overlay
+    attachable: true
+  pt_websecured:
+    external: true
+
+volumes:
+  etcd_data:
+    driver: local-persis
+    driver_opts:
+      mountpoint: /opt/sync/db/etcd_data
+  mysql-percona-master:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/mysql-percona-master
+  mysql-percona-master-log:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/mysql-percona-master-log
+  mysql-percona-node-0:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/mysql-percona-node-0
+  mysql-percona-node-0-log:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/mysql-percona-node-0-log
+  mysql-percona-node-1:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/mysql-percona-node-1
+  mysql-percona-node-1-log:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/mysql-percona-node-1-log
+  proxysql_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/proxysql_data
+
+services:
+  etcd0:
+    image: quay.io/coreos/etcd:v2.3.8
+    command: [ "--name", "etcd0","--advertise-client-urls", "http://127.0.0.1:2379,http://127.0.0.1:4001","--listen-client-urls", "http://0.0.0.0:2379,http://0.0.0.0:4001","--initial-advertise-peer-urls", "http://127.0.0.1:2380","--listen-peer-urls", "http://0.0.0.0:2380","--initial-cluster", "etcd0=http://127.0.0.1:2380","--initial-cluster-token", "etcd-cluster-1","--initial-cluster", "etcd0=http://127.0.0.1:2380","--initial-cluster-state", "new" ]
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
+    networks:
+      - xtradb
+    volumes:
+      - etcd_data:/var/lib/etcd
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+      - "4001:4001"
+
+  proxysql:
+    image: perconalab/proxysql:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
+    networks:
+      - xtradb
+      - pt_websecured
+    ports:
+      - "6033:6033"
+      - "6032:6032"
+    environment:
+      CLUSTER_NAME: "pxc-cluster1"
+      ETCD_HOST: "etcd0"
+      DISCOVERY_SERVICE: "etcd0:2379"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PROXY_USER: "proxyuser"
+      MYSQL_PROXY_PASSWORD: ${MYSQL_PROXY_PASSWORD}
+    volumes:
+      - proxysql_data:/var/lib/proxysql:rw
+
+  percona-xtradb-master:
+    image: percona/percona-xtradb-cluster:8.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      # service update configuration
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: continue
+        monitor: 60s
+        max_failure_ratio: 0.3
+    networks:
+      - xtradb
+    ports:
+      - target: 3306
+        published: 3306
+        protocol: tcp
+        mode: host
+      - target: 4444
+        published: 4444
+        protocol: tcp
+        mode: host
+      - target: 4567
+        published: 4567
+        protocol: tcp
+        mode: host
+      - target: 4568
+        published: 4568
+        protocol: tcp
+        mode: host
+    environment:
+      safe_to_bootstrap: 1
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      CLUSTER_NAME: "pxc-cluster1"
+      ETCD_HOST: "etcd0"
+      DISCOVERY_SERVICE: "etcd0:2379"
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - mysql-percona-master:/var/lib/mysql:rw
+      - mysql-percona-master-log:/var/log/mysql:rw
+    privileged: true
+
+  percona-xtradb-node-0:
+    image: percona/percona-xtradb-cluster:8.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-0 ]
+        max_replicas_per_node: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      # service update configuration
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: continue
+        monitor: 60s
+        max_failure_ratio: 0.3
+    networks:
+      - xtradb
+    ports:
+      - target: 3306
+        published: 3306
+        protocol: tcp
+        mode: host
+      - target: 4444
+        published: 4444
+        protocol: tcp
+        mode: host
+      - target: 4567
+        published: 4567
+        protocol: tcp
+        mode: host
+      - target: 4568
+        published: 4568
+        protocol: tcp
+        mode: host
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      CLUSTER_NAME: "pxc-cluster1"
+      ETCD_HOST: "etcd0"
+      DISCOVERY_SERVICE: "etcd0:2379"
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - mysql-percona-node-0:/var/lib/mysql:rw
+      - mysql-percona-node-0-log:/var/log/mysql:rw
+    privileged: true
+
+  percona-xtradb-node-1:
+    image: percona/percona-xtradb-cluster:8.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-1 ]
+        max_replicas_per_node: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      # service update configuration
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: continue
+        monitor: 60s
+        max_failure_ratio: 0.3
+    networks:
+      - xtradb
+    ports:
+      - target: 3306
+        published: 3306
+        protocol: tcp
+        mode: host
+      - target: 4444
+        published: 4444
+        protocol: tcp
+        mode: host
+      - target: 4567
+        published: 4567
+        protocol: tcp
+        mode: host
+      - target: 4568
+        published: 4568
+        protocol: tcp
+        mode: host
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      CLUSTER_NAME: "pxc-cluster1"
+      ETCD_HOST: "etcd0"
+      DISCOVERY_SERVICE: "etcd0:2379"
+      XTRABACKUP_PASSWORD: ${XTRABACKUP_PASSWORD}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - mysql-percona-node-1:/var/lib/mysql:rw
+      - mysql-percona-node-1-log:/var/log/mysql:rw
+    privileged: true
