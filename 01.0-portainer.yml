@@ -31,8 +31,7 @@ services:
         constraints: [node.labels.name == unison-master]
     ports:
       - "10050:9443"
-      #- "9000:9000"
-      #- "8000:8000"
+      - "9000:9000"
     volumes:
       - /opt/portainer_data:/data:rw
       - /var/run/docker.sock:/var/run/docker.sock

@@ -44,6 +44,11 @@ docker node update --label-add name=dns-master dns.ganjaking.cloud
 docker swarm init --advertise-addr 192.168.132.16 --listen-addr eth1:2377
 docker swarm init --advertise-addr 170.187.225.59
 
+docker swarm init --advertise-addr 192.168.138.214 --listen-addr eth1:2377
+
+docker swarm init --advertise-addr 192.168.166.106 --listen-addr 0.0.0.0:2377
+
+
 docker stack deploy -c 01.0-portainer.yml porta
 
 docker node inspect unison-node-0 --format 'worker addr:{{ .Status.Addr  }} {{printf "\n"}}manager addr: {{ .ManagerStatus.Addr  }}'
@@ -54,5 +59,12 @@ sudo reboot
 openssl req -new -newkey rsa:2048 -nodes -keyout ganjaking_cloud.key -out ganjaking_cloud.csr
 openssl req -new -newkey rsa:2048 -nodes -keyout ganjaking_asia.key -out ganjaking_asia.csr
 
+ssh-keygen -t ecdsa -b 521 -f ~/.ssh/id_rsa
+
 docker run --rm -v portainer_data:/data portainer/helper-reset-password
+
+sudo apk del docker docker-compose
+sudo rm -rf /var/lib/docker /etc/docker
+
+curl http://10.0.4.3/v2/keys/pxc-cluster/$CLUSTER_NAME/?recursive=true  | jq.
 

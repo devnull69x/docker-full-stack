@@ -22,3 +22,7 @@ docker network rm `docker network ls -q`
 
 # The following command show only show the default networks:
 # docker network ls
+docker swarm init --advertise-addr 192.168.132.16 --listen-addr 192.168.132.16:2377
+docker swarm init --advertise-addr 192.168.138.214 --listen-addr 0.0.0.0:2377
+
+docker swarm init --advertise-addr 192.168.166.106 --listten-addr 0.0.0.0:2377

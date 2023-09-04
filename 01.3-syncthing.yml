@@ -1,13 +1,11 @@
 version: "3.8"
 
 services:
-
-  master:
+  syncthing-master:
     image: syncthing/syncthing:latest
-    depends_on:
-      - persist_local-persist
     networks:
       - sync
+      - internet
     volumes:
       - sync:/var/syncthing:rw
     environment:
@@ -34,12 +32,11 @@ services:
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
-  node-0:
+  syncthing-node-0:
     image: syncthing/syncthing:latest
-    depends_on:
-      - persist_local-persist
     networks:
       - sync
+      - internet
     volumes:
       - sync:/var/syncthing:rw
     environment:
@@ -66,12 +63,11 @@ services:
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
-  node-1:
+  syncthing-node-1:
     image: syncthing/syncthing:latest
-    depends_on:
-      - persist_local-persist
     networks:
       - sync
+      - internet
     volumes:
       - sync:/var/syncthing:rw
     environment:
@@ -98,38 +94,6 @@ services:
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
-  node-2:
-    image: syncthing/syncthing:latest
-    depends_on:
-      - persist_local-persist
-    networks:
-      - sync
-    volumes:
-      - sync:/var/syncthing:rw
-    environment:
-      PUID: "1001"
-      PGID: "1001"
-    ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: tcp
-        mode: host
-      - target: 22000
-        published: 22000
-        protocol: udp
-        mode: host
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-node-2 ]
-    labels:
-      - "deunhealth.restart.on.unhealthy=true"
-
 volumes:
   sync:
     driver: local-persist
@@ -139,4 +103,7 @@ volumes:
 networks:
   sync:
     driver: overlay
+    attachable: true
+  internet:
+    external: true
     attachable: true
