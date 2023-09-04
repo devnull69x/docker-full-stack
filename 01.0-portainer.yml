@@ -7,19 +7,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/volumes:/var/lib/docker/volumes:rw
-    ports:
-      - target: 9001
-        published: 9001
-        protocol: tcp
-        mode: host
     networks:
       - websecured
     deploy:
       mode: global
       placement:
         max_replicas_per_node: 1
-      update_config:
-        parallelism: 1
 
   portainer:
     image: portainer/portainer-ee:latest
