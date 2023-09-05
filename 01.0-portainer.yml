@@ -13,6 +13,11 @@ services:
       mode: global
       placement:
         max_replicas_per_node: 1
+    environment:
+       AGENT_CLUSTER_ADDR: tasks.agent
+       AGENT_PORT: 9001
+       LOG_LEVEL: debug
+
 
   portainer:
     image: portainer/portainer-ee:latest
