@@ -13,6 +13,8 @@ services:
       mode: global
       placement:
         max_replicas_per_node: 1
+    ports:
+      - "9001:9001"
     environment:
        AGENT_CLUSTER_ADDR: tasks.agent
        AGENT_PORT: 9001
