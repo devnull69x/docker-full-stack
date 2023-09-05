@@ -1,6 +1,7 @@
 version: '3.3'
 
 services:
+  #created-in: docker stack deploy -c swarmpit.yml swarm
   app:
     image: swarmpit/swarmpit:latest
     environment:
@@ -33,7 +34,7 @@ services:
     volumes:
       - /opt/swarmpit/db-data:/opt/couchdb/data
     networks:
-      - net
+      - swarmpit
     deploy:
       resources:
         limits:
