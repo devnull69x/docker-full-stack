@@ -18,7 +18,7 @@ services:
     environment:
        AGENT_CLUSTER_ADDR: tasks.agent
        AGENT_PORT: 9001
-       LOG_LEVEL: debug
+       LOG_LEVEL: DEBUG
 
 
   portainer:
