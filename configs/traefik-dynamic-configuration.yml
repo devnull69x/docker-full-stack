@@ -1,4 +1,14 @@
-tls:
-  certificates:
-    - certFile: /certificates/ganjaking.cloud.crt
-      keyFile: /certificates/ganjakjing.cloud.key
+providers:
+  swarm:
+    allowEmptyServices: true
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: internet
+    refreshSeconds: 30
+    httpClientTimeout: 300
+    endpoint: "tcp://127.0.0.1:2377"
+    tls:
+      cert: /certificates/ganjaking.cloud.crt
+      key: /certificates/ganjakjing.cloud.key
+      ca: /certificates/ganjaking.cloud.ca
+      insecureSkipVerify: true

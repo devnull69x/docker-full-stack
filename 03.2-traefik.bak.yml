@@ -7,7 +7,7 @@ x-default-opts:
       max-size: "10m"
 
 networks:
-  pt_websecured:
+  internet:
     external: true
     attachable: true
 
@@ -26,8 +26,8 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.watch=true"
       - "--providers.docker.swarmMode=true"
-      - "--providers.docker.swarmModeRefreshSeconds=15s"
-      - "--providers.docker.network=pt_websecured"
+      - "--providers.docker.swarmModeRefreshSeconds=30s"
+      - "--providers.docker.network=internet"
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.file.filename=/etc/traefik/configs/traefik-dynamic-configuration.yml"
@@ -36,7 +36,7 @@ services:
       - "--global.checkNewVersion=true"
       - "--global.sendAnonymousUsage=false"
     networks:
-      - pt_websecured
+      - internet
     ports:
       - "80:80"
       - "443:443"
@@ -57,8 +57,8 @@ services:
         max_failure_ratio: 0.55
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=pt_websecured"
-        - "traefik.http.routers.dashboard.rule=Host(`traefik.ganjaking.cloud`)"
+        - "traefik.docker.network=internet"
+        - "traefik.http.routers.dashboard.rule=Host(`.ganjaking.cloud`)"
         - "traefik.http.routers.dashboard.entrypoints=http"
         - "traefik.http.routers.dashboard.middlewares=https-redirect"
         - "traefik.http.routers.dashboard.entrypoints=https"
@@ -74,3 +74,16 @@ services:
         - "traefik.http.routers.http-catchall.middlewares=https-redirect"
         - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
         - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+
+  whoami:
+    image: "traefik/whoami"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.whoami.rule=Host(`whoami.ganjaking.cloud`)"
+        - "traefik.http.routers.whoami.entrypoints=web"
+        - "traefik.http.services.whoami.loadbalancer.server.port=8080"

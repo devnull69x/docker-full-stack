@@ -10,7 +10,7 @@ x-default-opts:
       max-size: "10m"
 
 networks:
-  traefik-network:
+  internet:
     external: true
     attachable: true
 
@@ -32,7 +32,7 @@ services:
         failure_action: rollback
         max_failure_ratio: 0.55
     networks:
-      - traefik-network
+      - internet
     ports:
       - target: 80
         published: 80
@@ -72,16 +72,10 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
-      - /opt/sync/dk/traefik_data/acme/acme.json:/etc/traefik/acme/acme.json:rw
-      - /opt/sync/dk/traefik_data/traefik-dynamic-configuration.yml:/etc/traefik/configs/traefik-dynamic-configuration.yml:rw
-      - /opt/sync/dk/traefik_data/log/traefik.log:/etc/traefik/log/traefik.log
-      - /opt/sync/dk/traefik_data/certs/:/etc/traefik/certs/
-    healthcheck:
-      test: ["CMD", "wget", "http://localhost:8082/ping", "--spider"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
+      - /opt/sync/db/traefik_data/acme/acme.json:/etc/traefik/acme/acme.json:rw
+      - /opt/sync/db/traefik_data/traefik-dynamic-configuration.yml:/etc/traefik/configs/traefik-dynamic-configuration.yml:rw
+      - /opt/sync/db/traefik_data/log/traefik.log:/etc/traefik/log/traefik.log
+      - /opt/sync/db/traefik_data/certs/:/etc/traefik/certs/
     labels:
       - "traefik.enable=true"
       # Traefik URL (replace with yours)
@@ -103,14 +97,22 @@ services:
       - "traefik.http.routers.traefik.middlewares=authtraefik"
       - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$2y$$10$$sMzJfirKC75x/hVpiINeZOiSm.Jkity9cn4KwNkRvO7hSQVFc5FLO"
 
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.ganjaking.cloud`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+      -  "traefik.http.services.whoami.loadbalancer.server.port=8080"
 
 
 volumes:
   traefik_data:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data
+      mountpoint: /opt/sync/db/traefik_data
   traefik_certs:
     driver: local-persist
     driver_opts:
-      mountpoint: /opt/sync/dk/traefik_data/certs
+      mountpoint: /opt/sync/db/traefik_data/certs

@@ -44,13 +44,17 @@ docker node update --label-add name=dns-master dns.ganjaking.cloud
 docker swarm init --advertise-addr 192.168.132.16 --listen-addr eth1:2377
 docker swarm init --advertise-addr 170.187.225.59
 
-docker swarm init --advertise-addr 192.168.138.214 --listen-addr eth1:2377
+docker swarm init --advertise-addr 192.168.166.106 --listen-addr eth1:2377
 
 docker swarm init --advertise-addr 192.168.166.106 --listen-addr 0.0.0.0:2377
 
+docker swarm init --advertise-addr 139.162.63.62 --listen-addr eth1:2377
+
+docker swarm init --advertise-addr 192.168.178.252 --data-path-addr eth1
+
 
 docker stack deploy -c 01.0-portainer.yml porta
-
+139.162.63.62
 docker node inspect unison-node-0 --format 'worker addr:{{ .Status.Addr  }} {{printf "\n"}}manager addr: {{ .ManagerStatus.Addr  }}'
 docker node inspect unison-node-1 --format 'worker addr:{{ .Status.Addr  }} {{printf "\n"}}manager addr: {{ .ManagerStatus.Addr  }}'
 docker node inspect unison-master --format 'worker addr:{{ .Status.Addr  }} {{printf "\n"}}manager addr: {{ .ManagerStatus.Addr  }}'
@@ -68,3 +72,11 @@ sudo rm -rf /var/lib/docker /etc/docker
 
 curl http://10.0.4.3/v2/keys/pxc-cluster/$CLUSTER_NAME/?recursive=true  | jq.
 
+local-ganjaking (192.168.2.0/12)
+
+
+192.168.178.252 unison-master
+192.168.178.184 unison-node-0
+192.168.178.213 unison-node-1
+
+docker exec -t pmm-server change-admin-password 93220809Ch!
