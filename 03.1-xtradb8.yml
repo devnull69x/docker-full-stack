@@ -45,6 +45,10 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/db/proxysql_data
+  phpmyadmin_files:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/phpmyadmin_files
 
 networks:
   xtradb:
@@ -233,58 +237,34 @@ services:
   phpmyadmin:
     image: phpmyadmin:latest
     deploy:
-      mode: replicated
+      mode: global
+      update_config:
+        parallelism: 1
       replicas: 1
       placement:
         constraints: [ node.labels.name == unison-master ]
+        max_replicas_per_node: 1
       restart_policy:
         condition: on-failure
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.http.routers.phpmyadmin.entrypoints: "https"
+        traefik.http.routers.phpmyadmin.middlewares: "default@file"
+        traefik.http.routers.phpmyadmin.rule: "Host(`phpmyadmin.ganjaking.cloud`)"
+        traefik.http.routers.phpmyadmin.tls.options: "modern@file"
+        traefik.http.routers.phpmyadmin.tls: "true"
+        traefik.http.services.phpmyadmin.loadbalancer.server.port: 80
+        traefik.http.services.phpmyadmin.loadbalancer.sticky.cookie.httpOnly: "true"
+        traefik.http.services.phpmyadmin.loadbalancer.sticky.cookie.secure: "true"
     ports:
-      - "10054:80"
+      - "80"
     networks:
       - xtradb
       - internet
     environment:
       - PM_ARBITRARY=1
-      #- PMA_HOST=percona-xtradb-master
-      - PMA_HOST=haproxy
+      - PMA_HOST=percona-xtradb-master
     volumes:
       - phpmyadmin_data:/sessions
-
-  proxysql:
-    image: perconalab/proxysql:latest
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-master ]
-        max_replicas_per_node: 1
-    networks:
-      - xtradb
-      - internet
-    ports:
-      - "6033:6033"
-      - "6032:6032"
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      DISCOVERY_SERVICE: "etcd0:2379"
-      CLUSTER_NAME: "pxc-cluster1"
-      MYSQL_PROXY_USER: "proxyuser"
-      MYSQL_PROXY_PASSWORD: ${MYSQL_PROXY_PASSWORD}
-    volumes:
-      - proxysql_data:/var/lib/proxysql:rw
-
-  haproxy:
-    image: percona/haproxy:latest
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [ node.labels.name == unison-master ]
-        max_replicas_per_node: 1
-    networks:
-      - xtradb
-      - internet
-    volumes:
-      - /opt/sync/db/haproxy/haproxy.cfg:/etc/haproxy/haproxy.cfg :rw
-      - /opt/sync/db/haproxy/haproxy-global.cfg:/etc/haproxy/haproxy-global.cfg:rw
+      - phpmyadmin_files:/var/www/html

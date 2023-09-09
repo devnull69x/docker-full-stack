@@ -41,8 +41,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /opt/traefik/traefik-dynamic-configuration.yml:/etc/traefik/configs/traefik-dynamic-configuration.yml
-      - /opt/traefik/certs:/certificates
+      - /opt/sync/db/traefik_data/traefik-dynamic-configuration.yml:/etc/traefik/configs/traefik-dynamic-configuration.yml:rw
+      - /opt/sync/db/traefik_data/certs:/certificates:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
       mode: replicated
@@ -58,7 +58,7 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=internet"
-        - "traefik.http.routers.dashboard.rule=Host(`.ganjaking.cloud`)"
+        - "traefik.http.routers.dashboard.rule=Host(`traefik.ganjaking.cloud`)"
         - "traefik.http.routers.dashboard.entrypoints=http"
         - "traefik.http.routers.dashboard.middlewares=https-redirect"
         - "traefik.http.routers.dashboard.entrypoints=https"
@@ -77,6 +77,8 @@ services:
 
   whoami:
     image: "traefik/whoami"
+    networks:
+      - internet
     deploy:
       mode: replicated
       replicas: 1
@@ -84,6 +86,7 @@ services:
         constraints: [ node.labels.name == unison-master ]
       labels:
         - "traefik.enable=true"
+        - "traefik.http.routers.whoami.entrypoints=https"
         - "traefik.http.routers.whoami.rule=Host(`whoami.ganjaking.cloud`)"
-        - "traefik.http.routers.whoami.entrypoints=web"
-        - "traefik.http.services.whoami.loadbalancer.server.port=8080"
+        - "traefik.http.routers.whoami.service=whoami"
+        - "traefik.http.services.whoami.loadbalancer.server.port=80"
