@@ -8,7 +8,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/volumes:/var/lib/docker/volumes:rw
     networks:
-      - ws
+      - websecured
     deploy:
       mode: global
       placement:
@@ -29,30 +29,18 @@ services:
       replicas: 1
       placement:
         constraints: [node.labels.name == unison-master]
-      labels:
-        traefik.enable: "true"
-        traefik.docker.network: "internet"
-        traefik.http.routers.portainer.entrypoints: "https"
-        traefik.http.routers.portainer.middlewares: "default@file"
-        traefik.http.routers.portainer.rule: "Host(`cluster.ganjaking.cloud`) && PathPrefix(`/portainer`))"
-        traefik.http.routers.portainer.tls.options: "modern@file"
-        traefik.http.routers.portainer.tls: "true"
-        traefik.http.services.portainer.loadbalancer.server.port: 9443
-        traefik.http.services.portainer.loadbalancer.sticky.cookie.httpOnly: "true"
-        traefik.http.services.portainer.loadbalancer.sticky.cookie.secure: "true"
+    ports:
+      - "10050:9443"
+      - "9000:9000"
     volumes:
       - /opt/portainer_data:/data:rw
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - ws
-      - internet
+      - websecured
 
 networks:
-  ws:
+  websecured:
     driver: overlay
-    attachable: true
-  internet:
-    external: true
     attachable: true
 
 volumes:
