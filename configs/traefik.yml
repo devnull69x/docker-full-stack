@@ -24,6 +24,12 @@ global:
   checknewversion: true                       # Periodically check if a new version has been released.
   sendanonymoususage: true                    # Periodically send anonymous usage statistics.
 
+log:
+  level: "DEBUG"
+  filepath: "/var/log/traefik/traefik.log"
+accessLog:
+  filepath: "/var/log/traefik/access.log"
+
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"   # Listen to the UNIX Docker socket

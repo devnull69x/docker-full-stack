@@ -5,7 +5,8 @@
 users:
   admin:
     displayname: "admin"
-    password: "admin:$argon2i$v=19$m=65536,t=4,p=1$ODhyTjRIU2pCUXdwLkVrQQ$25Us101h13Xkfq8erDRCVK5yPSar6f7szZa0vRyEjII"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$0xM4mVx79bgua25rSxeUVg$/z8BJp2J1jYqZf2U5Fb6it4l3ebER7tkAG27Sbq4kEo"
     email: richard.irwanshah@gerekper.asia
     groups:
       - admins
+      - dev

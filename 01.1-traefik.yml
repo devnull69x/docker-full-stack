@@ -11,6 +11,12 @@ networks:
     external: true
     attachable: true
 
+volumes:
+  authelia_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/authelia_data
+
 services:
   traefik:
     <<: *default-opts
@@ -26,6 +32,8 @@ services:
       - /opt/sync/db/traefik_data/acme:/etc/traefik/acme
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /opt/sync/db/traefik_data/certs:/etc/certificates
+      - /opt/sync/db/traefik_data/logs/traefik.log:/var/log/traefik/traefik.log:rw
+      - /opt/sync/db/traefik_data/logs/access.log:/var/log/traefik/access.log:rw
     deploy:
       mode: replicated
       replicas: 1
@@ -38,17 +46,50 @@ services:
         failure_action: rollback
         max_failure_ratio: 0.55
       labels:
-          traefik.enable: "true"
-          traefik.docker.network: "internet"
-          traefik.http.routers.traefik.entrypoints: "https"
-          traefik.http.routers.traefik.middlewares: "default@file"
-          traefik.http.routers.traefik.rule: "Host(`traefik.ganjaking.cloud`)"
-          traefik.http.routers.traefik.service: "api@internal"
-          traefik.http.routers.traefik.tls.options: "modern@file"
-          traefik.http.routers.traefik.tls: "true"
-          traefik.http.services.traefik.loadbalancer.server.port: 8080
-          traefik.http.services.traefik.loadbalancer.sticky.cookie.httpOnly: "true"
-          traefik.http.services.traefik.loadbalancer.sticky.cookie.secure: "true"
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.http.routers.traefik.entrypoints: "https"
+        traefik.http.routers.traefik.middlewares: "authelia@file,default@file"
+        traefik.http.routers.traefik.rule: "Host(`traefik.ganjaking.cloud`)"
+        traefik.http.routers.traefik.service: "api@internal"
+        traefik.http.routers.traefik.tls.options: "modern@file"
+        traefik.http.routers.traefik.tls: "true"
+        traefik.http.services.traefik.loadbalancer.server.port: 8080
+        traefik.http.services.traefik.loadbalancer.sticky.cookie.httpOnly: "true"
+        traefik.http.services.traefik.loadbalancer.sticky.cookie.secure: "true"
+
+  authelia:
+    image: authelia/authelia:latest
+    depends_on:
+      - traefik
+    networks:
+      - internet
+    expose:
+      - 9091
+    volumes:
+      - authelia_data:/config
+      - /opt/sync/db/traefik_data/certs:/certificates
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+      update_config:
+        parallelism: 1
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.http.routers.authelia.entrypoints: "https"
+        traefik.http.routers.authelia.middlewares: "default@file"
+        traefik.http.routers.authelia.rule: "Host(`auth.ganjaking.cloud`)"
+        traefik.http.routers.authelia.tls.options: "modern@file"
+        traefik.http.routers.authelia.tls: "true"
+        traefik.http.services.authelia.loadbalancer.server.port: 9091
+        traefik.http.services.authelia.loadbalancer.sticky.cookie.httpOnly: "true"
+        traefik.http.services.authelia.loadbalancer.sticky.cookie.secure: "true"
+    restart: unless-stopped
+    environment:
+      - TZ= Asia/Singapore
 
   whoami:
     image: "traefik/whoami"

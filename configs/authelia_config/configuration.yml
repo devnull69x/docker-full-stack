@@ -2,19 +2,36 @@
 #                   Authelia configuration                    #
 ###############################################################
 
-host: 0.0.0.0
-port: 9091
-log_level: warn
+
+theme: dark #light/dark
+
 
 # This secret can also be set using the env variables AUTHELIA_JWT_SECRET_FILE
 # I used this site to generate the secret: https://www.grc.com/passwords.htm
 # jwt_secret: SECRET_GOES_HERE # use docker secret file instead AUTHELIA_JWT_SECRET_FILE
-
+jwt_secret: "Txf9Ml6UZy2cuzOW+Wk3oofCf4x5AaXR7aXmRJZiKey59kSt4lQoEwYrmwHKhZZT8Fe+vkTcrS25lqVzfHcZdLGsmHMS3yxsduUoxtciQ4zXFJDfcsiTWt4TDAf2Y2/aXVosA=="
 # https://docs.authelia.com/configuration/miscellaneous.html#default-redirection-url
-default_redirection_url: https://authelia.example.com
+default_redirection_url: https://google.com/
+
+server:
+  host: 0.0.0.0
+  port: 9091
+  path: ""
+  buffers:
+    read: 4096
+    write: 4096
+  enable_pprof: false
+  enable_expvars: false
+  disable_healthcheck: false
+  tls:
+    key: ""
+    certificate: ""
+
+log:
+  level: debug
 
 totp:
-  issuer: authelia.com
+  issuer: ganjaking.cloud
   period: 30
   skew: 1
 
@@ -27,43 +44,38 @@ totp:
 #  secret_key: # use docker secret file instead AUTHELIA_DUO_API_SECRET_KEY_FILE
 
 authentication_backend:
+  password_reset:
+    disable: true
+  refresh_interval: 5m
   file:
-    path: /config/users_database.yml
-    # customize passwords based on https://docs.authelia.com/configuration/authentication/file.html
+    path: /config/users_database.yml #this is where your authorized users are stored
     password:
       algorithm: argon2id
       iterations: 1
+      key_length: 32
       salt_length: 16
+      memory: 1024
       parallelism: 8
-      memory: 1024 # blocks this much of the RAM. Tune this.
 
 # https://docs.authelia.com/configuration/access-control.html
 access_control:
   default_policy: deny
   rules:
-    # Rules applied to everyone
-    - domain: authelia.example.com
+    - domain: "auth.ganjaking.cloud"
       policy: bypass
-    #    - domain: radarr.example.com
-    #      policy: bypass
-    #      subject: "group:admins"
-    #      resources:
-    #      - "^/api/.*$"
-    #    - domain: "*.example.com"
-    #      policy: one_factor
-    - domain: "*.example.com"
-      policy: two_factor
-    - domain: "example.com"
-      policy: two_factor
+    - domain: "ganjaking.cloud"
+      policy: bypass
+    - domain: "traefik.ganjaking.cloud"
+      policy: one_factor
+    - domain: "whoami.ganjaking.cloud"
+      policy: one_factor
 
 session:
   name: authelia_session
-  # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE
-  # Used a different secret, but the same site as jwt_secret above.
-  # secret: SECRET_GOES_HERE # use docker secret file instead AUTHELIA_SESSION_SECRET_FILE
+  secret: "3YS2uzz6ZN/e6ibkSZP0cOxb4AgqzgRAVZKTURW7t3+WsA81zJ+5v8QTIk7uMg5aUeAirPv0lgSJ2KLJaekokHBkyOqI5hVNbEYB21AwVbM3AVgilWyWObCp2sq3hdEEmAuhgw=="
   expiration: 3600 # 1 hour
   inactivity: 300 # 5 minutes
-  domain: example.com # Should match whatever your root protected domain is
+  domain: ganjaking.cloud # Should match whatever your root protected domain is
 
     # Optional. Can improve performance on a busy system. If not enabled, session info is stored in memory.
     #  redis:
@@ -74,30 +86,32 @@ session:
 
 regulation:
   max_retries: 3
-  find_time: 120
-  ban_time: 300
+  find_time: 10m
+  ban_time: 24h
 
 storage:
   # For local storage, uncomment lines below and comment out mysql. https://docs.authelia.com/configuration/storage/sqlite.html
-  #  local:
-  #    path: /config/db.sqlite3
-  mysql:
-    # MySQL allows running multiple authelia instances. Create database and enter details below.
-    host: MYSQL_HOST
-    port: 3306
-    database: authelia
-    username: DBUSERNAME
-    # Password can also be set using a secret: https://docs.authelia.com/configuration/secrets.html
-    # password: use docker secret file instead AUTHELIA_STORAGE_MYSQL_PASSWORD_FILE
+  encryption_key: "j+roj7w42FYAIqVPlmhxAfL4RBU"
+  local:
+    path: /config/db.sqlite3
+
+  #mysql:
+  #  # MySQL allows running multiple authelia instances. Create database and enter details below.
+  #  host: MYSQL_HOST
+  #  port: 3306
+  #  database: authelia
+  #  username: DBUSERNAME
+  #  # Password can also be set using a secret: https://docs.authelia.com/configuration/secrets.html
+  #  # password: use docker secret file instead AUTHELIA_STORAGE_MYSQL_PASSWORD_FILE
 
 notifier:
-  smtp:
-    username: SMTP_USERNAME
-    # This secret can also be set using the env variables AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE
-    # password: # use docker secret file instead AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE
-    host: SMTP_HOST
-    port: 587 #465
-    sender: SENDER_EMAIL
+  #smtp:
+  #  username: richard.irwanshah@gmail.com
+  #  # This secret can also be set using the env variables AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE
+  #  # password: # use docker secret file instead AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE
+  #  host: SMTP_HOST
+  #  port: 587 #465
+  #  sender: richard.irwanshah@gmail.com
   # For testing purpose, notifications can be sent in a file. Be sure map the volume in docker-compose.
-#  filesystem:
-#    filename: /tmp/authelia/notification.txt
+  filesystem:
+    filename: /tmp/authelia/notification.txt
