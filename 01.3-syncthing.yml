@@ -12,10 +12,6 @@ services:
       PUID: "1001"
       PGID: "1001"
     ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
       - target: 22000
         published: 22000
         protocol: tcp
@@ -29,6 +25,17 @@ services:
       replicas: 1
       placement:
         constraints: [ node.labels.name == unison-master ]
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.http.routers.syncthing-master.entrypoints: "https"
+        traefik.http.routers.syncthing-master.middlewares: "default@file"
+        traefik.http.routers.syncthing-master.rule: "Host(`sync1.ganjaking.cloud`)"
+        traefik.http.routers.syncthing-master.tls.options: "modern@file"
+        traefik.http.routers.syncthing-master.tls: "true"
+        traefik.http.services.syncthing-master.loadbalancer.server.port: 8384
+        traefik.http.services.syncthing-master.loadbalancer.sticky.cookie.httpOnly: "true"
+        traefik.http.services.syncthing-master.loadbalancer.sticky.cookie.secure: "true"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
@@ -43,10 +50,6 @@ services:
       PUID: "1001"
       PGID: "1001"
     ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
       - target: 22000
         published: 22000
         protocol: tcp
@@ -60,6 +63,17 @@ services:
       replicas: 1
       placement:
         constraints: [ node.labels.name == unison-node-0 ]
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.http.routers.syncthing-node-0.rule: "Host(`sync2.ganjaking.cloud`)"
+        traefik.http.routers.syncthing-node-0.middlewares: "default@file"
+        traefik.http.routers.syncthing-node-0.entrypoints: "https"
+        traefik.http.routers.syncthing-node-0.tls.options: "modern@file"
+        traefik.http.routers.syncthing-node-0.tls: "true"
+        traefik.http.services.syncthing-node-0.loadbalancer.server.port: 8384
+        traefik.http.services.syncthing-node-0.loadbalancer.sticky.cookie.httpOnly: "true"
+        traefik.http.services.syncthing-node-0.loadbalancer.sticky.cookie.secure: "true"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
@@ -74,10 +88,6 @@ services:
       PUID: "1001"
       PGID: "1001"
     ports:
-      - target: 8384
-        published: 10052
-        protocol: tcp
-        mode: host
       - target: 22000
         published: 22000
         protocol: tcp
@@ -91,6 +101,17 @@ services:
       replicas: 1
       placement:
         constraints: [ node.labels.name == unison-node-1 ]
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.http.routers.syncthing-node-1.rule: "Host(`sync3.ganjaking.cloud`)"
+        traefik.http.routers.syncthing-node-1.middlewares: "default@file"
+        traefik.http.routers.syncthing-node-1.entrypoints: "https"
+        traefik.http.routers.syncthing-node-1.tls.options: "modern@file"
+        traefik.http.routers.syncthing-node-1.tls: "true"
+        traefik.http.services.syncthing-node-1.loadbalancer.server.port: 8384
+        traefik.http.services.syncthing-node-1.loadbalancer.sticky.cookie.httpOnly: "true"
+        traefik.http.services.syncthing-node-1.loadbalancer.sticky.cookie.secure: "true"
     labels:
       - "deunhealth.restart.on.unhealthy=true"
 
