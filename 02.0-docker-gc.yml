@@ -14,7 +14,7 @@ services:
         parallelism: 1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude:rw
+      - /opt/sync/db/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude:rw
     environment:
       - CRON=59 23 * * 6
       - FORCE_IMAGE_REMOVAL=1

@@ -1,0 +1,43 @@
+version: "3.9"
+
+networks:
+  internet:
+    external: true
+    attachable: true
+
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+      update_config:
+        parallelism: 1
+    networks:
+      - internet
+    volumes:
+    - /opt/sync/db/crowdsec_config/acquis.yaml:/etc/crowdsec/acquis.yaml
+    - crowdsec_db:/var/lib/crowdsec/data/
+    - crowdsec_config:/etc/crowdsec/
+    - traefik_data_cd:/var/log/traefik/:ro
+    environment:
+      UID: "1001"
+      GID: "1001"
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/traefik"
+
+volumes:
+  crowdsec_config:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/crowdsec_config
+  crowdsec_db:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/crowdsec_db
+  traefik_data_cd:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/traefik_data/logs
