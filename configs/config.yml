@@ -24,17 +24,9 @@ http:
     # Recommended default middleware for most of the services
     # Use with traefik.http.routers.myRouter.middlewares: "default@file"
     # Equivalent of traefik.http.routers.myRouter.middlewares: "default-security-headers@file,error-pages@file,gzip@file"
-    default-whitelist:
-      ipWhitelist:
-        sourceRange:
-          - "10.0.0.0/24"
-          - "192.168.0.0/16"
-          - "172.0.0.0/8"
-
     default:
       chain:
         middlewares:
-          - default-whitelist
           - crowdsec-bouncer
           - default-security-headers
           - error-pages
