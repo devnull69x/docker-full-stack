@@ -42,3 +42,13 @@ providers:
     filename: "/etc/traefik/config.yml"       # Link to the dynamic configuration
     watch: true                               # Watch for modifications
   providersThrottleDuration: 10               # Configuration reload frequency
+
+
+pilot:
+  token: xxxx
+
+experimental:
+  plugins:
+    traefik-real-ip:
+      modulename: github.com/soulbalz/traefik-real-ip
+      version: v1.0.3
