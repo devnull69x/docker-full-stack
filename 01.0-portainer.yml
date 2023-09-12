@@ -45,6 +45,8 @@ services:
     networks:
       - ws
       - internet
+    ports:
+      - 10050:9000
 
 networks:
   ws:
