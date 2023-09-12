@@ -43,9 +43,15 @@ providers:
     watch: true                               # Watch for modifications
   providersThrottleDuration: 10               # Configuration reload frequency
 
-
-pilot:
-  token: xxxx
+metrics:
+  prometheus:
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
+    addEntryPointsLabels: true
+    addRoutersLabels: true
 
 experimental:
   plugins:
