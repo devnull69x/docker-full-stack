@@ -29,6 +29,8 @@ server:
 
 log:
   level: debug
+  format: text
+  file_path: /config/authelia.log
 
 totp:
   issuer: ganjaking.cloud

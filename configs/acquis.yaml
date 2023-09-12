@@ -2,3 +2,8 @@ filenames:
     - /var/log/traefik/*
 labels:
     type: traefik
+
+filenames:
+ - /config/authelia.log
+labels:
+  type: authelia
