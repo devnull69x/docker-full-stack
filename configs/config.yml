@@ -27,16 +27,37 @@ http:
           excludednets:
             - 1.1.1.1/24
 
+    my-plugin-log4shell:
+      plugin:
+        plugin-log4shell:
+          errorCode: "200"
+
+    my-plugin-simplecache:
+      plugin:
+        plugin-simplecache:
+          path: /tmp
+
+    my-torblock:
+      plugin:
+        torblock:
+          AddressListURL: https://check.torproject.org/exit-addresses
+          Enabled: "true"
+          UpdateInterval: "3600"
+
     # Recommended default middleware for most of the services
     # Use with traefik.http.routers.myRouter.middlewares: "default@file"
     # Equivalent of traefik.http.routers.myRouter.middlewares: "default-security-headers@file,error-pages@file,gzip@file"
     default:
       chain:
         middlewares:
+          - my-traefik-real-ip
+          - my-torblock
           - crowdsec-bouncer
+          - my-plugin-log4shell
           - default-security-headers
           - error-pages
           - gzip
+          - my-plugin-simplecache
 
     # Add automatically some security headers
     # Use with traefik.http.routers.myRouter.middlewares: "default-security-headers@file"

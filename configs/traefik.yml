@@ -50,5 +50,14 @@ pilot:
 experimental:
   plugins:
     traefik-real-ip:
-      modulename: github.com/soulbalz/traefik-real-ip
-      version: v1.0.3
+      modulename: "github.com/soulbalz/traefik-real-ip"
+      version: "v1.0.3"
+    plugin-log4shell:
+      moduleName: "github.com/traefik/plugin-log4shell"
+      version: "v0.1.2"
+    plugin-simplecache:
+      moduleName: "github.com/traefik/plugin-simplecache"
+      version: "v0.2.1"
+    torblock:
+      moduleName: "github.com/jpxd/torblock"
+      version: "v0.1.1"
