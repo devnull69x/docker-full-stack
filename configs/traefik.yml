@@ -20,6 +20,9 @@ entryPoints:
   https:
     address: ":443"                           # Create the HTTPS entrypoint on port 443
 
+  redis:
+    address: "6379"
+
 global:
   checknewversion: true                       # Periodically check if a new version has been released.
   sendanonymoususage: true                    # Periodically send anonymous usage statistics.
