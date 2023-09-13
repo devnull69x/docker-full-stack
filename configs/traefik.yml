@@ -23,6 +23,9 @@ entryPoints:
   redis:
     address: ":6379"
 
+  mysql:
+    address: ":3306"
+
 global:
   checknewversion: true                       # Periodically check if a new version has been released.
   sendanonymoususage: true                    # Periodically send anonymous usage statistics.
