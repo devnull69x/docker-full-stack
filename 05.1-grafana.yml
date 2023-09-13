@@ -1,0 +1,191 @@
+version: '3.6'
+
+services: #mount --make-rshared /
+
+  node-exporter-master:
+    image: docker.io/bitnami/node-exporter:1
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+    network_mode: host
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+    networks:
+      - gf
+    command:
+     - '--path.procfs=/host/proc'
+     - '--path.rootfs=/rootfs'
+     - '--path.sysfs=/host/sys'
+     - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+  node-exporter-node-0:
+    image: docker.io/bitnami/node-exporter:1
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-0 ]
+    network_mode: host
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+    networks:
+      - gf
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+  node-exporter-node-1:
+    image: docker.io/bitnami/node-exporter:1
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-1 ]
+    network_mode: host
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+    networks:
+      - gf
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+  cadvisor-master:
+    image: gcr.io/cadvisor/cadvisor:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+    network_mode: host
+    networks:
+      - gf
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    restart: unless-stopped
+
+  cadvisor-node-0:
+    image: gcr.io/cadvisor/cadvisor:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-0 ]
+    network_mode: host
+    networks:
+      - gf
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    restart: unless-stopped
+
+  cadvisor-node-1:
+    image: gcr.io/cadvisor/cadvisor:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-1 ]
+    network_mode: host
+    networks:
+      - gf
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    restart: unless-stopped
+
+  prometheus:
+    image: docker.io/bitnami/prometheus:latest
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+    volumes:
+      - prometheus_data:/opt/bitnami/prometheus/data
+      - /opt/sync/db/prometheus_data/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - gf
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: docker.io/bitnami/grafana:10
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-master ]
+      labels:
+         traefik.enable: "true"
+         traefik.docker.network: "internet"
+         traefik.http.routers.grafana.entrypoints: "https"
+         traefik.http.routers.grafana.middlewares: "default@file"
+         traefik.http.routers.grafana.rule: "Host(`grafana.ganjaking.cloud`)"
+         traefik.http.routers.grafana.tls.options: "modern@file"
+         raefik.http.routers.grafana.tls: "true"
+         traefik.http.services.grafana.loadbalancer.server.port: 3000
+         traefik.http.services.grafana.loadbalancer.sticky.cookie.httpOnly: "true"
+         traefik.http.services.grafana.loadbalancer.sticky.cookie.secure: "true"
+    networks:
+      - gf
+      - internet
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+    volumes:
+      - grafana_data:/opt/bitnami/grafana/data
+
+volumes:
+  grafana_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/grafana_data
+  prometheus_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/prometheus_data
+
+networks:
+  gf:
+    driver: overlay
+    attachable: true
+  internet:
+    external: true
+    attachable: true
