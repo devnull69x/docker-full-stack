@@ -41,10 +41,6 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: /opt/sync/db/phpmyadmin_data
-  proxysql_data:
-    driver: local-persist
-    driver_opts:
-      mountpoint: /opt/sync/db/proxysql_data
   phpmyadmin_files:
     driver: local-persist
     driver_opts:
@@ -86,7 +82,7 @@ services:
       - "4001:4001"
 
   percona-xtradb-master:
-    image: perconalab/percona-xtradb-cluster:latest
+    image: perconalab/percona-xtradb-cluster:5.7
     deploy:
       mode: replicated
       replicas: 1
@@ -104,12 +100,16 @@ services:
         failure_action: continue
         monitor: 60s
         max_failure_ratio: 0.3
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.tcp.routers.xtradb.entrypoints: "mysql"
+        traefik.tcp.routers.xtradb.rule: "HostSNI(`*`)"
+        traefik.tcp.services.xtradb.loadbalancer.server.port: "3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       DISCOVERY_SERVICE: "etcd0:2379"
       CLUSTER_NAME: "pxc-cluster1"
-      MYSQL_PROXY_USER: "proxyuser"
-      MYSQL_PROXY_PASSWORD: ${MYSQL_PROXY_PASSWORD}
     networks:
       - xtradb
     ports:
@@ -138,6 +138,12 @@ services:
         failure_action: continue
         monitor: 60s
         max_failure_ratio: 0.3
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.tcp.routers.xtradb.entrypoints: "mysql"
+        traefik.tcp.routers.xtradb.rule: "HostSNI(`*`)"
+        traefik.tcp.services.xtradb.loadbalancer.server.port: "3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       DISCOVERY_SERVICE: "etcd0:2379"
@@ -170,6 +176,12 @@ services:
         failure_action: continue
         monitor: 60s
         max_failure_ratio: 0.3
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "internet"
+        traefik.tcp.routers.xtradb.entrypoints: "mysql"
+        traefik.tcp.routers.xtradb.rule: "HostSNI(`*`)"
+        traefik.tcp.services.xtradb.loadbalancer.server.port: "3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       DISCOVERY_SERVICE: "etcd0:2379"
