@@ -83,7 +83,7 @@ services:
       replicas: 1
       placement:
         constraints: [ node.labels.name == unison-node-0 ]
-        max_replicas_per_node: 1
+        max_replicas_per_node: 2
       labels:
         traefik.enable: "true"
         traefik.docker.network: "internet"
@@ -108,7 +108,7 @@ services:
       replicas: 1
       placement:
         constraints: [ node.labels.name == unison-node-1 ]
-        max_replicas_per_node: 1
+        max_replicas_per_node: 2
       labels:
         traefik.enable: "true"
         traefik.docker.network: "internet"
