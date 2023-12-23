@@ -1,0 +1,15 @@
+version: "3.7"
+services:
+  organizr:
+    image: organizr/organizr:latest
+    container_name: organizr
+    environment:
+      - fpm="false"
+      - TZ=Asia/Singapore
+      - PUID:1001
+      - PGID:1001
+    volumes:
+      - /opt/dashboard:/config
+    ports:
+      - 10051:80
+    restart: unless-stopped

@@ -79,4 +79,4 @@ local-ganjaking (192.168.2.0/12)
 192.168.178.184 unison-node-0
 192.168.178.213 unison-node-1
 
-docker exec -t pmm-server change-admin-password 93220809Ch!
+docker exec -t pmm-server change-admin-password
