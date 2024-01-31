@@ -80,3 +80,32 @@ local-ganjaking (192.168.2.0/12)
 192.168.178.213 unison-node-1
 
 docker exec -t pmm-server change-admin-password
+
+
+# /etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+source-directory /etc/network/interfaces.d
+
+auto eth0
+
+iface eth0 inet6 manual
+        pre-up echo 2 > /proc/sys/net/ipv6/conf/eth0/accept_ra
+
+iface eth0 inet static
+    address 139.162.18.90
+    netmask 255.255.255.0
+    gateway 139.162.18.1
+    up   ip addr add 192.168.134.145/17 dev eth0 label eth0:1
+    down ip addr del 192.168.134.145/17 dev eth0 label eth0:1
+
+auto eth1
+
+iface eth1 inet6 manual
+        pre-up echo 2 > /proc/sys/net/ipv6/conf/eth1/accept_ra
+
+iface eth1 inet static
+    address 192.168.2.0
+    netmask 255.255.255.0
+
