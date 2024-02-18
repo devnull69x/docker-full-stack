@@ -12,7 +12,6 @@ services:
         max_replicas_per_node: 1
     networks:
       - glusterfs2
-      - internet
     environment:
       - PUID:1001
       - PGID:1001
@@ -25,85 +24,138 @@ services:
   glusterfs2:
     image: gluster/gluster-centos
     privileged: true
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-0 ]
+        max_replicas_per_node: 1
     networks:
      - glusterfs
-     - internet
     environment:
       - PUID:1001
       - PGID:1001
     volumes:
-      - glusterfs_etc_volume2:/etc/glusterfs
-      - glusterfs_lib_volume2:/var/lib/glusterd
-      - glusterfs_log_volume2:/var/log/glusterfs
-      - gulsterfs_data_volume2:/data/glusterfs
+      - glusterfs_etc_2:/etc/glusterfs
+      - glusterfs_lib_2:/var/lib/glusterd
+      - glusterfs_log_2:/var/log/glusterfs
+      - gulsterfs_data_2:/data/glusterfs
   
   glusterfs3:
     image: gluster/gluster-centos
     privileged: true
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-1 ]
+        max_replicas_per_node: 1
     networks:
       - glusterfs
-      - internet
     volumes:
-      - glusterfs_etc_volume3:/etc/glusterfs
-      - glusterfs_lib_volume3:/var/lib/glusterd
-      - glusterfs_log_volume3:/var/log/glusterfs
-      - gulsterfs_data_volume3:/data/glusterfs
+      - glusterfs_etc_3:/etc/glusterfs
+      - glusterfs_lib_3:/var/lib/glusterd
+      - glusterfs_log_3:/var/log/glusterfs
+      - gulsterfs_data_3:/data/glusterfs
   
   glusterfs4:
     image: gluster/gluster-centos
     privileged: true
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.labels.name == unison-node-2 ]
+        max_replicas_per_node: 1
     networks:
       - glusterfs
-      - internet
     volumes:
-      - glusterfs_etc_volume3:/etc/glusterfs
-      - glusterfs_lib_volume3:/var/lib/glusterd
-      - glusterfs_log_volume3:/var/log/glusterfs
-      - gulsterfs_data_volume3:/data/glusterfs
+      - glusterfs_etc_4:/etc/glusterfs
+      - glusterfs_lib_4:/var/lib/glusterd
+      - glusterfs_log_4:/var/log/glusterfs
+      - gulsterfs_data_4:/data/glusterfs
 
 networks:
   glusterfs: 
     driver: overlay
     attachable: true
-  internet: 
-    external: true
-    attachable: true
 
 volumes:
   glusterfs_etc_1:
+    driver: local-persist
     driver_opts: 
-    mountpoint: /opt/glusterfs/etc
+      mountpoint: /opt/glusterfs/etc
   glusterfs_lib_1:
+    driver: local-persist
     driver_opts: 
-    mountpoint: /opt/glusterfs/lib
+      mountpoint: /opt/glusterfs/lib
   glusterfs_log_1:
+    driver: local-persist
     driver_opts:
-    mountpoint: /opt/glusterfs/log
+      mountpoint: /opt/glusterfs/log
   gulsterfs_data_1:
+    driver: local-persist
     driver_opts:
-    mountpoint: /opt/glusterfs/db
+      mountpoint: /opt/glusterfs/db
   
-  glusterfs_etc_volume2:
-  glusterfs_lib_volume2:
-  glusterfs_log_volume2:
-  gulsterfs_data_volume2:
+  glusterfs_etc_2:
+    driver: local-persist
+    driver_opts: 
+      mountpoint: /opt/glusterfs/etc
+  glusterfs_lib_2:
+    driver: local-persist
+    driver_opts: 
+      mountpoint: /opt/glusterfs/lib
+  glusterfs_log_2:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/log
+  gulsterfs_data_2:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/db
 
-  glusterfs_etc_volume3:
-  glusterfs_lib_volume3:
-  glusterfs_log_volume3:
-  gulsterfs_data_volume3:
+  glusterfs_etc_3:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/etc
+  glusterfs_lib_3:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/lib
+  glusterfs_log_3:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/log
+  gulsterfs_data_3:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/db
 
-  glusterfs_etc_volume4:
-  glusterfs_lib_volume4:
-  glusterfs_log_volume4:
-  gulsterfs_data_volume4:
+  glusterfs_etc_4:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/etc
+  glusterfs_lib_4:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/lib
+  glusterfs_log_4:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/log
+  gulsterfs_data_4:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/glusterfs/db
+
 
 # docker-compose up -d glusterfs1 glusterfs2 glusterfs3 glusterfs4
 # echo "Sleep 10 seconds to wait the glusterfs up"
 # sleep 10
-# docker-compose exec glusterfs1 gluster peer probe glusterfs2
+# docker-compose exec glusterfs1 gluster peer probe glusterfs2 glusterfs3 glusterfs4
 # docker-compose exec glusterfs1 gluster volume create test-volume replica 2 transport tcp glusterfs1:/data/glusterfs/test glusterfs2:/data/glusterfs/test
 # docker-compose exec glusterfs1 gluster volume start test-volume
-# docker-compose exec glusterfs1 setfacl -m u:1000:rwx /data/glusterfs/test
-# docker-compose exec glusterfs2 setfacl -m u:1000:rwx /data/glusterfs/test
+# docker-compose exec glusterfs1 setfacl -m u:1001:rwx /data/glusterfs/test
+# docker-compose exec glusterfs2 setfacl -m u:1001:rwx /data/glusterfs/test
 # docker-compose exec glusterfs1 tail -f /var/log/glusterfs/bricks/data-glusterfs-test.log
