@@ -1,0 +1,86 @@
+version: "3.8"
+
+services:
+  authentik-db:
+    image: docker.io/library/postgres:16.2
+    networks:
+      - net_authentik
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data\
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRSE_DB}
+      - TZ=Asia/Singapore
+      - PUID:1001
+      - PGID:1001
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-node-1]
+        max_replicas_per_node: 1
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "${POSTGRES_USER}"']
+      start_period: 30s
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  authentik-redis:
+    image: docker.io/library/redis:7.2.4
+    networks:
+      - net_authentik
+    volumes:
+      - auth_redis_data:/data
+    environment:
+      - TZ=Asia/Singapore
+      - PUID:1001
+      - PGID:1001
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.name == unison-node-1]
+        max_replicas_per_node: 1
+    command: --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    restart: unless-stopped
+
+  authentik-server:
+    image: ghcr.io/goauthentik/server:2024.2.2
+    command: server
+    environment:
+      - TZ=Asia/Singapore
+      - PUID:1001
+      - PGID:1001
+      - AUTHENTIK_REDIS__HOST=authentik-redis
+      - AUTHENTIK_POSTGRESQL__HOST=authentik-db
+      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
+      - AUTHENTIK_POSTGRESQL__NAME=${POSTGRSE_DB}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+
+volumes:
+  auth_postgres_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/auth_postgres_data
+  auth_redis_data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /opt/sync/db/auth_redis_data
+
+networks:
+  net_authentik:
+    driver: overlay
+    attachable: true
+  internet:
+    external: true
+    attachable: true
