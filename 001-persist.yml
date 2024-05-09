@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   #created-in: docker stack deploy -c 01.2-persist.yml persist
@@ -7,6 +7,9 @@ services:
     volumes:
       - /run/docker/plugins/:/run/docker/plugins/:rw
       - /opt/json/:/var/lib/docker/plugin-data/:rw
+    environment:
+      - PUID:1001
+      - PGID:1001
     deploy:
       mode: global
       placement:

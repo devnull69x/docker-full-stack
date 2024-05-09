@@ -24,5 +24,7 @@ services:
       - DRY_RUN=0
       - CLEAN_UP_VOLUMES=1
       - TZ=Asia/Singapore
+      - PUID:1001
+      - PGID:1001
     labels:
       - "deunhealth.restart.on.unhealthy=true"
