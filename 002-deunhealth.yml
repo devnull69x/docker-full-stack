@@ -3,6 +3,8 @@ version: "3.8"
 services:
   deunhealth:
     image: qmcgaw/deunhealth
+    container_name: deunhealth
+    restart: unless-stopped
     depends_on:
       - persist_local-persist
     deploy:
@@ -11,7 +13,6 @@ services:
         max_replicas_per_node: 1
       update_config:
         parallelism: 1
-    network_mode: "none"
     environment:
       - LOG_LEVEL=info
       - HEALTH_SERVER_ADDRESS=127.0.0.1:9999
