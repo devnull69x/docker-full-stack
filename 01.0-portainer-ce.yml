@@ -3,7 +3,7 @@ version: "3.8"
 services:
   # Portainer Server (Management UI)
   portainer:
-    image: portainer/portainer-ce:2.29.1 # Pinned version
+    image: portainer/portainer-ce:2.29.1-alpine
     #command: --sslcert /run/secrets/portainer_cert --sslkey /run/secrets/portainer_key
     command: -H tcp://tasks.agent:9001 --tlsskipverify
     deploy:
@@ -54,7 +54,7 @@ services:
 
   # Portainer Agent (Cluster-wide)
   agent:
-    image: portainer/agent:2.20.2
+    image: portainer/agent:2.29.1-alpine
     hostname: "{{.Node.Hostname}}" # Dynamic hostname for node identification
     deploy:
       mode: global
