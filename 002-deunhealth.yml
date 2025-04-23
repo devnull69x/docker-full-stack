@@ -5,6 +5,7 @@ services:
     image: qmcgaw/deunhealth
     container_name: deunhealth
     restart: unless-stopped
+    network_mode: "none"
     depends_on:
       - persist_local-persist
     deploy:
