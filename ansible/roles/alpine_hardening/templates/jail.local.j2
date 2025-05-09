@@ -1,0 +1,34 @@
+# {{ ansible_managed }} - FÜHRERBUNKER INTRUSION SUPPRESSION
+
+[sshd]
+enabled   = true
+port      = {{ ssh_port }}
+filter    = alpine-sshd
+logpath   = /var/log/messages
+maxretry  = 2
+findtime  = 1h
+bantime   = 24h
+ignoreip  = {{ fail2ban_ignoreips | default('127.0.0.1') }}
+
+[sshd-ddos]
+enabled   = true
+port      = {{ ssh_port }}
+filter    = alpine-sshd-ddos
+logpath   = /var/log/messages
+maxretry  = 5
+findtime  = 10m
+bantime   = 6h
+
+[sshd-key]
+enabled   = true
+port      = {{ ssh_port }}
+filter    = alpine-sshd-key
+logpath   = /var/log/messages
+maxretry  = 1
+bantime   = 168h  # 1 WEEK for key probing
+
+[recidive]
+enabled   = true
+filter    = recidive
+logpath   = /var/log/fail2ban.log
+bantime   = 8760h  # 1 YEAR for repeat offenders

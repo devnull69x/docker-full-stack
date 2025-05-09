@@ -1,45 +1,45 @@
 F:\github\docker-full-stack\ansible\
 ├── inventories/
-│   ├── production/
-│   │   ├── hosts.ini          # Inventory of 3 Alpine nodes
-│   │   └── group_vars/
-│   │       └── alpine_nodes.yml # Cluster-wide vars (e.g., `ansible_user`, `ansible_ssh_private_key_file`)
-│   └── staging/               # (Optional, mirrors production)
-│
+│   └── production/
+│       ├── hosts.ini               # ✅ EXISTS (3 nodes defined)
+│       └── group_vars/
+│           └── alpine_nodes.yml    # ✅ EXISTS (vars for cluster)
 ├── roles/
-│   ├── alpine_base/           # Core Alpine setup
+│   ├── alpine_base/
 │   │   ├── tasks/
-│   │   │   ├── main.yml       # Hostname, timezone (Asia/Singapore), packages
-│   │   │   └── motd.yml       # MOTD/banner cleanup
+│   │   │   ├── main.yml           # ✅ EXISTS (base setup)
+│   │   │   ├── timezone.yml       # ✅ EXISTS (Asia/Singapore)
+│   │   │   └── motd.yml           # ✅ EXISTS (banner cleanup)
 │   │   └── templates/
-│   │       └── hosts.j2       # Dynamic /etc/hosts
+│   │       └── hosts.j2           # ✅ EXISTS (dynamic /etc/hosts)
 │   │
-│   ├── alpine_hardening/      # Security lockdown
+│   ├── alpine_hardening/          # 🔄 CONFIRMED STRUCTURE
 │   │   ├── tasks/
-│   │   │   ├── sshd.yml       # SSH port, config, keys
-│   │   │   ├── fail2ban.yml   # Fail2Ban setup
-│   │   │   └── sudoers.yml    # Sudo rules
-│   │   └── templates/
-│   │       ├── sshd_config.j2 # SSH config template
-│   │       └── banner.j2      # SSH warning banner
+│   │   │   ├── sshd.yml           # ✅ EXISTS (SSH config)
+│   │   │   ├── fail2ban.yml       # ✅ EXISTS (Fail2Ban setup)
+│   │   │   └── sudoers.yml        # ✅ EXISTS (sudo rules)
+│   │   └── templates/             # ✅ ORIGINALLY EMPTY
+│   │       ├── sshd_config.j2     # ✅ ADDED (no path change)
+│   │       ├── banner.j2          # ✅ ADDED (no path change)
+│   │       └── jail.local.j2      # ❗ ADDED (but dir existed)
 │   │
-│   ├── user_admin/            # User management
+│   ├── user_admin/
 │   │   ├── tasks/
-│   │   │   ├── main.yml       # Create sudo user, set password
-│   │   │   └── keys.yml       # Deploy SSH keys
+│   │   │   ├── main.yml           # ✅ EXISTS (user creation)
+│   │   │   └── keys.yml           # ✅ EXISTS (SSH keys)
 │   │   └── vars/
-│   │       └── main.yml       # Default user/password vars
+│   │       └── main.yml           # ✅ EXISTS (user vars)
 │   │
-│   └── docker_ce/             # Docker setup
+│   └── docker_ce/
 │       └── tasks/
-│           └── main.yml       # Install Docker, add user to group
+│           └── main.yml           # ✅ EXISTS (Docker install)
 │
 ├── playbooks/
-│   ├── provision.yml          # Full node setup (calls all roles)
-│   └── secure.yml             # Security-only updates
+│   ├── provision.yml              # ✅ EXISTS (main playbook)
+│   └── secure.yml                 # ✅ EXISTS (hardening playbook)
 │
 ├── group_vars/
-│   └── all.yml                # Global defaults (timezone: Asia/Singapore)
+│   └── all.yml                    # ✅ EXISTS (timezone: Asia/Singapore)
 │
-├── ansible.cfg                # Local config (e.g., inventory path, SSH args)
-└── README.md                  # Usage: `ansible-playbook -i inventories/production/hosts.ini playbooks/provision.yml`
+├── ansible.cfg                    # ✅ EXISTS (config)
+└── README.md                      # ✅ EXISTS (documentation)
