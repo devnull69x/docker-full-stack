@@ -1,45 +1,47 @@
-F:\github\docker-full-stack\ansible\
-├── inventories/
-│   └── production/
-│       ├── hosts.ini               # ✅ EXISTS (3 nodes defined)
-│       └── group_vars/
-│           └── alpine_nodes.yml    # ✅ EXISTS (vars for cluster)
-├── roles/
-│   ├── alpine_base/
-│   │   ├── tasks/
-│   │   │   ├── main.yml           # ✅ EXISTS (base setup)
-│   │   │   ├── timezone.yml       # ✅ EXISTS (Asia/Singapore)
-│   │   │   └── motd.yml           # ✅ EXISTS (banner cleanup)
-│   │   └── templates/
-│   │       └── hosts.j2           # ✅ EXISTS (dynamic /etc/hosts)
-│   │
-│   ├── alpine_hardening/          # 🔄 CONFIRMED STRUCTURE
-│   │   ├── tasks/
-│   │   │   ├── sshd.yml           # ✅ EXISTS (SSH config)
-│   │   │   ├── fail2ban.yml       # ✅ EXISTS (Fail2Ban setup)
-│   │   │   └── sudoers.yml        # ✅ EXISTS (sudo rules)
-│   │   └── templates/             # ✅ ORIGINALLY EMPTY
-│   │       ├── sshd_config.j2     # ✅ ADDED (no path change)
-│   │       ├── banner.j2          # ✅ ADDED (no path change)
-│   │       └── jail.local.j2      # ❗ ADDED (but dir existed)
-│   │
-│   ├── user_admin/
-│   │   ├── tasks/
-│   │   │   ├── main.yml           # ✅ EXISTS (user creation)
-│   │   │   └── keys.yml           # ✅ EXISTS (SSH keys)
-│   │   └── vars/
-│   │       └── main.yml           # ✅ EXISTS (user vars)
-│   │
-│   └── docker_ce/
-│       └── tasks/
-│           └── main.yml           # ✅ EXISTS (Docker install)
-│
-├── playbooks/
-│   ├── provision.yml              # ✅ EXISTS (main playbook)
-│   └── secure.yml                 # ✅ EXISTS (hardening playbook)
-│
-├── group_vars/
-│   └── all.yml                    # ✅ EXISTS (timezone: Asia/Singapore)
-│
-├── ansible.cfg                    # ✅ EXISTS (config)
-└── README.md                      # ✅ EXISTS (documentation)
+alpine-hardening/
+├── .ansible-lint                  # Linting rules
+├── ansible.cfg                    # Ansible configuration
+├── inventory/
+│   ├── production/
+│   │   ├── hosts.yml              # Production hosts (YAML)
+│   │   └── group_vars/            # Group-specific variables
+│   └── staging/                   # Mirror of production for staging
+├── requirements.yml               # Role dependencies
+├── site.yml                       # Master playbook
+├── README.md                      # Project documentation (this file)
+├── compliance/                    # Compliance mappings
+│   ├── cis.yml                    # CIS Benchmark
+│   ├── nist_800-53.yml            # NIST SP 800-53
+│   ├── disa_stig.yml              # DISA STIG
+│   ├── sg_im8.yml                 # Singapore IM8
+│   ├── mas_trm.yml                # MAS TRM
+│   └── csa_cyber_essentials.yml   # CSA Cyber Essentials
+├── defaults/
+│   └── main.yml                   # Safe defaults
+├── vars/
+│   ├── production.yml             # High-security profile
+│   └── development.yml            # Balanced profile
+├── tasks/                         # Hardening modules
+│   ├── 01_preflight.yml           # System validation
+│   ├── 02_minimal_install.yml     # Package minimization
+│   ├── 03_kernel_hardening.yml    # Kernel parameters
+│   ├── 04_filesystem.yml          # Secure mounts
+│   ├── 05_user_auth.yml           # PAM/MFA
+│   ├── 06_services.yml            # SSH/cron hardening
+│   ├── 07_logging.yml             # Auditd config
+│   ├── 08_network.yml             # Network stack
+│   ├── 09_crypto.yml              # Cryptography
+│   └── 10_postflight.yml          # Validation
+├── templates/
+│   ├── etc/
+│   │   ├── ssh/sshd_config.j2     # Hardened SSH
+│   │   ├── audit/rules.d/im8.j2   # IM8 audit rules
+│   │   └── sysctl.d/99-hardened.j2 # Kernel settings
+│   └── fstab.j2                   # Secure mounts
+├── handlers/
+│   └── main.yml                   # Service handlers
+├── meta/
+│   └── main.yml                   # Role metadata
+└── tests/
+    ├── test_playbook.yml          # Integration tests
+    └── requirements.txt           # Test dependencies
