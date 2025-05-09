@@ -1,0 +1,45 @@
+F:\github\docker-full-stack\ansible\
+├── inventories/
+│   ├── production/
+│   │   ├── hosts.ini          # Inventory of 3 Alpine nodes
+│   │   └── group_vars/
+│   │       └── alpine_nodes.yml # Cluster-wide vars (e.g., `ansible_user`, `ansible_ssh_private_key_file`)
+│   └── staging/               # (Optional, mirrors production)
+│
+├── roles/
+│   ├── alpine_base/           # Core Alpine setup
+│   │   ├── tasks/
+│   │   │   ├── main.yml       # Hostname, timezone (Asia/Singapore), packages
+│   │   │   └── motd.yml       # MOTD/banner cleanup
+│   │   └── templates/
+│   │       └── hosts.j2       # Dynamic /etc/hosts
+│   │
+│   ├── alpine_hardening/      # Security lockdown
+│   │   ├── tasks/
+│   │   │   ├── sshd.yml       # SSH port, config, keys
+│   │   │   ├── fail2ban.yml   # Fail2Ban setup
+│   │   │   └── sudoers.yml    # Sudo rules
+│   │   └── templates/
+│   │       ├── sshd_config.j2 # SSH config template
+│   │       └── banner.j2      # SSH warning banner
+│   │
+│   ├── user_admin/            # User management
+│   │   ├── tasks/
+│   │   │   ├── main.yml       # Create sudo user, set password
+│   │   │   └── keys.yml       # Deploy SSH keys
+│   │   └── vars/
+│   │       └── main.yml       # Default user/password vars
+│   │
+│   └── docker_ce/             # Docker setup
+│       └── tasks/
+│           └── main.yml       # Install Docker, add user to group
+│
+├── playbooks/
+│   ├── provision.yml          # Full node setup (calls all roles)
+│   └── secure.yml             # Security-only updates
+│
+├── group_vars/
+│   └── all.yml                # Global defaults (timezone: Asia/Singapore)
+│
+├── ansible.cfg                # Local config (e.g., inventory path, SSH args)
+└── README.md                  # Usage: `ansible-playbook -i inventories/production/hosts.ini playbooks/provision.yml`

@@ -1,0 +1,102 @@
+{
+  // ACL groups
+  "groups": {
+    "group:admin": ["admin@yourdomain.com"],
+    "group:developer": ["dev1@yourdomain.com", "dev2@yourdomain.com"],
+    "group:guest": ["guest@yourdomain.com"],
+    "group:servers": ["tag:server"]
+  },
+
+  // Tag definitions
+  "tagOwners": {
+    "tag:server": ["group:admin"], // Only admins can tag nodes as servers
+    "tag:prod": ["group:admin"],
+    "tag:staging": ["group:admin", "group:developer"]
+  },
+
+  // Access Control Rules
+  "acls": [
+    // Admins can access everything
+    {
+      "action": "accept",
+      "src": ["group:admin"],
+      "dst": ["*:*"]
+    },
+
+    // Developers can access staging and developer resources
+    {
+      "action": "accept",
+      "src": ["group:developer"],
+      "dst": [
+        "tag:staging:*",
+        "group:developer:*",
+        "autogroup:self:*"
+      ]
+    },
+
+    // Guests can only access specific services
+    {
+      "action": "accept",
+      "src": ["group:guest"],
+      "dst": [
+        "tag:staging:80",    // HTTP only
+        "tag:staging:443",   // HTTPS only
+        "autogroup:self:*"    // Access to their own devices
+      ]
+    },
+
+    // Servers can talk to other servers
+    {
+      "action": "accept",
+      "src": ["tag:server"],
+      "dst": ["group:servers:*"]
+    },
+
+    // Default deny rule (implicit, but explicit is better)
+    {
+      "action": "deny",
+      "src": ["*"],
+      "dst": ["*:*"]
+    }
+  ],
+
+  // SSH access rules
+  "ssh": [
+    // Admins can SSH to any node
+    {
+      "action": "accept",
+      "src": ["group:admin"],
+      "dst": ["*:*"],
+      "users": ["root", "admin"]
+    },
+
+    // Developers can SSH to staging and their own devices
+    {
+      "action": "accept",
+      "src": ["group:developer"],
+      "dst": ["tag:staging:*", "autogroup:self:*"],
+      "users": ["devuser"]
+    },
+
+    // Deny all other SSH access
+    {
+      "action": "deny",
+      "src": ["*"],
+      "dst": ["*:*"]
+    }
+  ],
+
+  // Node expiration (auto-remove inactive nodes)
+  "autoApprovers": {
+    "routes": {
+      "10.0.0.0/16": ["group:admin"],
+      "192.168.1.0/24": ["group:admin"]
+    },
+    "exitNode": ["group:admin"],
+    "nodes": {
+      "group:guest": ["7d"],    // Guest nodes expire after 7 days
+      "group:developer": ["30d"], // Developer nodes after 30 days
+      "group:admin": ["never"]    // Admin nodes never expire
+    }
+  }
+}

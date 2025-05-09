@@ -1,0 +1,11 @@
+---
+- name: Apply security hardening
+  hosts: alpine_cluster
+  become: true
+
+  roles:
+    - role: alpine_hardening
+      tags: security
+      vars:
+        fail2ban_maxretry: 3
+        ssh_root_login: false

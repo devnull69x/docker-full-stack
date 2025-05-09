@@ -1,0 +1,78 @@
+# Headscale server configuration
+server_url: "https://your.headscale.domain:443" # Must be HTTPS in production
+listen_addr: "0.0.0.0:8080" # Internal port, should be behind reverse proxy
+
+# Database configuration
+db_type: "postgres" # PostgreSQL recommended for production
+db_host: "/var/run/postgresql" # Use Unix socket for better security
+db_port: 5432
+db_name: "headscale"
+db_user: "headscale"
+db_pass: "your_strong_db_password_here" # Store in environment variable in production
+
+# TLS configuration (recommended to terminate TLS at reverse proxy)
+tls_cert_path: "" # Managed by reverse proxy
+tls_key_path: "" # Managed by reverse proxy
+
+# ACL configuration
+acl_policy_path: "/etc/headscale/acl.hujson" # Path to your ACL policy file
+
+# DNS configuration
+dns_config:
+  nameservers:
+    - "1.1.1.1" # Cloudflare
+    - "8.8.8.8" # Google
+  domains: []
+  magic_dns: true
+  base_domain: "your.domain"
+
+# Logging configuration
+log:
+  level: "info" # "debug" only for troubleshooting
+  format: "json" # JSON format for structured logging
+
+# Rate limiting
+rate_limit:
+  enabled: true
+  packets_per_second: 50
+  burst: 100
+
+# IP prefixes
+ip_prefixes:
+  - "fd7a:115c:a1e0::/48" # Tailscale's default IPv6 prefix
+  - "100.64.0.0/10" # Tailscale's default IPv4 prefix
+
+# DERPServer configuration
+derp:
+  server:
+    enabled: false # Disable built-in DERP, use Tailscale's or your own
+    region_id: 999
+    region_code: "selfhosted"
+    region_name: "Selfhosted DERP"
+    stun_listen_addr: ":3478"
+  urls:
+    - "https://controlplane.tailscale.com/derpmap/default"
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 24h
+
+# Ephemeral node settings
+ephemeral_node_inactivity_timeout: "30m" # Remove ephemeral nodes after inactivity
+
+# Node update settings
+node_update_check_interval: "10s"
+
+# Randomize client port to make scanning harder
+randomize_client_port: true
+
+# GRPC settings
+grpc_listen_addr: "127.0.0.1:50443" # Only listen on localhost
+grpc_allow_insecure: false
+
+# Metrics and profiling (disable in production unless needed)
+metrics_listen_addr: ""
+enable_profile: false
+
+# Experimental features
+experimental:
+  use_legacy_pre_auth_key: false

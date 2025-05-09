@@ -1,0 +1,80 @@
+version: "3.8"
+
+services:
+  # Gluster Server Cluster (3-node replica)
+  gluster-server:
+    image: gluster/gluster-centos:latest
+    hostname: "gluster-server-{{.Task.Slot}}"
+    deploy:
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+    volumes:
+      - type: bind
+        source: /mnt/gluster/brick-{{.Task.Slot}}
+        target: /bricks/brick{{.Task.Slot}}
+        bind:
+          propagation: rshared
+      - type: bind
+        source: /var/lib/glusterd-{{.Task.Slot}}
+        target: /var/lib/glusterd
+    networks:
+      - gluster-net
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - no-new-privileges
+    healthcheck:
+      test: ["CMD", "gluster", "peer", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Gluster Client Service (Global for all nodes)
+  gluster-client:
+    image: gluster/glusterfs-client:alpine
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 256M
+    volumes:
+      - type: volume
+        source: shared-data
+        target: /mnt/glusterfs
+        volume:
+          nocopy: true
+    command:
+      [
+        "glusterfs",
+        "--volfile-server=gluster-server-1",
+        "--volfile-id=/vol1",
+        "/mnt/glusterfs",
+      ]
+    networks:
+      - gluster-net
+    cap_add:
+      - SYS_ADMIN
+    depends_on:
+      - gluster-server
+
+volumes:
+  shared-data:
+    driver: local
+    driver_opts:
+      type: tmpfs # Initial mount until Gluster is ready
+      device: tmpfs
+
+networks:
+  gluster-net:
+    driver: overlay
+    attachable: true
+    ipam:
+      config:
+        - subnet: 10.20.0.0/24

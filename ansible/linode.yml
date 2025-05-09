@@ -1,0 +1,305 @@
+---
+- name: Linode Alpine Linux Setup
+  hosts: all
+  become: yes
+  vars:
+    fqdn: "{{ fqdn | default('web.example.com') }}"
+    timezone: "{{ timezone | default('Asia/Singapore') }}"
+    user: "{{ user | default('username') }}"
+    password: "{{ password | default('strongPassword') }}"
+    pubkey: "{{ pubkey | default('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...') }}"
+    sshport: "{{ sshport | default('22') }}"
+    allowuser: "{{ allowuser | default('y') }}"
+  tasks:
+    - name: Update apk package index and upgrade packages
+      apk:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Get IP address of default route interface
+      command: ip route get 1
+      register: ip_route
+      changed_when: false
+
+    - name: Set IP address fact
+      set_fact:
+        ip_address: "{{ ip_route.stdout | regex_search('src ([0-9.]+)', '\\1') }}"
+
+    - name: Read /etc/network/interfaces to find static interface
+      slurp:
+        src: /etc/network/interfaces
+      register: interfaces_file
+      ignore_errors: yes
+
+    - name: Set interface fact from interfaces file
+      set_fact:
+        interface_name: "{{ (interfaces_file.content | b64decode).split('\n') | select('match', '^iface .* static') | map('split') | map('last') | list | first }}"
+      when: interfaces_file is defined and interfaces_file.content is defined
+
+    - name: Set hostname and FQDN
+      block:
+        - name: Extract hostname from fqdn
+          set_fact:
+            hostname: "{{ fqdn.split('.')[0] }}"
+
+        - name: Set hostname file
+          copy:
+            content: "{{ hostname }}\n"
+            dest: /etc/hostname
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Set hostname command
+          command: hostname -F /etc/hostname
+
+        - name: Add IP and FQDN to /etc/hosts
+          lineinfile:
+            path: /etc/hosts
+            line: "{{ ip_address }} {{ fqdn }} {{ hostname }}"
+            create: yes
+            state: present
+            insertafter: EOF
+      when: fqdn is defined and fqdn != ''
+
+    - name: Install tzdata package
+      apk:
+        name: tzdata
+        state: present
+
+    - name: Set timezone file
+      copy:
+        src: "/usr/share/zoneinfo/{{ timezone }}"
+        dest: /etc/localtime
+        remote_src: yes
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Set /etc/timezone content
+      copy:
+        content: "{{ timezone }}\n"
+        dest: /etc/timezone
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Remove tzdata package
+      apk:
+        name: tzdata
+        state: absent
+
+    - name: Create daily auto_update script
+      copy:
+        dest: /etc/periodic/daily/auto_update
+        content: |
+          #!/bin/sh
+          apk update -q && apk upgrade -q
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: Install sudo package
+      apk:
+        name: sudo
+        state: present
+
+    - name: Ensure sudo group exists
+      group:
+        name: sudo
+        state: present
+
+    - name: Create sudo user
+      user:
+        name: "{{ user }}"
+        groups: sudo
+        append: yes
+        password: "{{ password | password_hash('sha512') }}"
+        shell: /bin/sh
+        create_home: yes
+
+    - name: Allow alpine user sudo privileges
+      lineinfile:
+        path: /etc/sudoers
+        line: "alpine ALL=(ALL) ALL"
+        state: present
+        validate: "visudo -cf %s"
+
+    - name: Create .ssh directory for sudo user
+      file:
+        path: "/home/{{ user }}/.ssh"
+        state: directory
+        mode: "0700"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+
+    - name: Add authorized_keys for sudo user
+      copy:
+        content: "{{ pubkey }}\n"
+        dest: "/home/{{ user }}/.ssh/authorized_keys"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: "0600"
+
+    - name: Backup sshd_config before changes
+      copy:
+        src: /etc/ssh/sshd_config
+        dest: "/etc/ssh/sshd_config.bak_{{ ansible_date_time.iso8601_basic }}"
+        remote_src: yes
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Set SSH port
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?Port "
+        line: "Port {{ sshport }}"
+        backrefs: yes
+
+    - name: Set SSH LogLevel to VERBOSE
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?LogLevel "
+        line: "LogLevel VERBOSE"
+        backrefs: yes
+
+    - name: Disable root login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^PermitRootLogin "
+        line: "PermitRootLogin no"
+        backrefs: yes
+
+    - name: Restrict SSH login to sudo user if allowuser is y
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: "^PermitRootLogin no"
+        line: "AllowUsers {{ user }}"
+      when: allowuser == 'y'
+
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PasswordAuthentication "
+        line: "PasswordAuthentication no"
+        backrefs: yes
+
+    - name: Set SSH banner file path
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?Banner "
+        line: "Banner /etc/ssh/banner"
+        backrefs: yes
+
+    - name: Create SSH banner file
+      copy:
+        dest: /etc/ssh/banner
+        content: |
+          ###############################################################
+          #         Welcome to {{ fqdn }}
+          #       All connections are monitored and recorded
+          #  Disconnect IMMEDIATELY if you are not an authorized user!
+          ###############################################################
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Clear /etc/motd to remove default Alpine login message
+      copy:
+        content: ""
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install fail2ban package
+      apk:
+        name: fail2ban
+        state: present
+
+    - name: Enable fail2ban service at boot
+      service:
+        name: fail2ban
+        enabled: yes
+        state: started
+
+    - name: Create fail2ban jail config for alpine ssh
+      copy:
+        dest: /etc/fail2ban/jail.d/alpine-ssh.local
+        content: |
+          [sshd]
+          enabled  = true
+          filter   = alpine-sshd
+          port     = ssh
+          logpath  = /var/log/messages
+          maxretry = 2
+          [sshd-ddos]
+          enabled  = true
+          filter   = alpine-sshd-ddos
+          port     = ssh
+          logpath  = /var/log/messages
+          maxretry = 2
+          [sshd-key]
+          enabled  = true
+          filter   = alpine-sshd-key
+          port     = ssh
+          logpath  = /var/log/messages
+          maxretry = 2
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Create fail2ban filter for alpine ssh key
+      copy:
+        dest: /etc/fail2ban/filter.d/alpine-sshd-key.local
+        content: |
+          # Fail2Ban filter for openssh for Alpine
+          #
+          # Filtering login attempts with PasswordAuthentication No in sshd_config.
+          #
+          [INCLUDES]
+          # Read common prefixes. If any customizations available -- read them from
+          # common.local
+          before = common.conf
+          [Definition]
+          _daemon = sshd
+          failregex = (Connection closed by|Disconnected from) authenticating user .* <HOST> port \d* \[preauth\]
+          ignoreregex =
+          [Init]
+          # "maxlines" is number of log lines to buffer for multi-line regex searches
+          maxlines = 10
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Restart fail2ban service
+      service:
+        name: fail2ban
+        state: restarted
+
+    - name: Restart sshd service
+      service:
+        name: sshd
+        state: restarted
+
+    - name: Install docker package
+      apk:
+        name: docker
+        state: present
+
+    - name: Enable docker service at boot
+      service:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add user to docker group
+      user:
+        name: "{{ user }}"
+        groups: docker
+        append: yes
+
+    - name: Wait for Docker daemon to warm up
+      pause:
+        seconds: 10

@@ -1,0 +1,37 @@
+---
+# System Configuration
+timezone: Asia/Singapore # Locked to Singapore
+package_manager: apk # Alpine-specific
+
+# User Configuration
+admin_user: admin # Matches ansible.cfg remote_user
+ssh_port: 2222 # Matches ansible.cfg ssh_args
+
+# Security
+fail2ban_enabled: true
+ssh_password_login: false
+
+# System Packages
+base_packages:
+  - curl
+  - htop
+  - tmux
+  - sudo
+  - openssh
+  - git
+  - python3
+  - python3-dev
+  - py3-pip
+  - py3-virtualenv
+  - py3-virtualenvwrapper
+  - libffi-dev
+  - libxml2-dev
+  - libxslt-dev
+  - libjpeg-turbo-dev
+  - zlib-dev
+  - libffi-dev
+  - libressl-dev
+  - linux-headers
+  - build-base
+  - gcc
+  - musl-dev
