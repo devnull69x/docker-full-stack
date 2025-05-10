@@ -1,0 +1,96 @@
+# Alpine Linux Hardening Automation - Full Command Cheatsheet
+
+=== 1. INITIAL SETUP ===
+# Clone repo & install dependencies
+git clone https://github.com/your-org/alpine-hardening.git
+cd alpine-hardening
+ansible-galaxy install -r requirements.yml
+
+# Version checks
+ansible --version  # ≥2.12 required
+python3 --version  # ≥3.8 required
+docker --version   # ≥24.0 for Docker
+jq --version       # ≥1.6 for compliance
+
+=== 2. CORE HARDENING ===
+# Full system hardening
+ansible-playbook site.yml -i inventory/production/hosts.yml
+ansible-playbook site.yml -i inventory/staging/hosts.yml -e "profile=development"
+
+# Docker hardening
+ansible-playbook site.yml -i inventory/production/hosts.yml -e "docker_required=true cis_docker_profile=hardened"
+ansible-playbook tasks/docker/rollback.yml -e "docker_clean_state=true"
+
+# Individual modules
+ansible-playbook tasks/01_preflight.yml
+ansible-playbook tasks/02_minimal_install.yml
+ansible-playbook tasks/03_kernel_hardening.yml
+ansible-playbook tasks/04_filesystem.yml
+ansible-playbook tasks/05_user_auth.yml
+ansible-playbook tasks/06_services.yml
+ansible-playbook tasks/07_logging.yml
+ansible-playbook tasks/08_network.yml
+ansible-playbook tasks/09_crypto.yml
+ansible-playbook tasks/10_postflight.yml
+
+=== 3. TARGETED OPERATIONS ===
+# Tag-based execution
+ansible-playbook site.yml --tags "kernel,network"
+ansible-playbook site.yml --skip-tags "crypto"
+ansible-playbook site.yml --tags "preflight,minimal,kernel,filesystem,auth,services,logging,network,crypto"
+
+=== 4. COMPLIANCE OPERATIONS ===
+# Validation
+ansible-playbook site.yml --tags "compliance_matrix" -e "cis_profile=hardened im8_profile=enhanced nist_profile=moderate"
+ansible-playbook site.yml --tags "compliance_check" -e "framework=cis"
+ansible-playbook site.yml --tags "compliance_check" -e "framework=im8"
+ansible-playbook site.yml --tags "compliance_check" -e "framework=stig"
+
+# Reports
+ansible-playbook site.yml --tags "compliance_report" -e "format=html"
+ansible-playbook site.yml --tags "compliance_report" -e "format=pdf"
+ansible-playbook site.yml --tags "compliance_report" -e "format=json"
+
+=== 5. UTILITIES & DEBUGGING ===
+# Dry run
+ansible-playbook site.yml --check --diff
+
+# Debugging
+ansible-playbook site.yml -vvv
+ANSIBLE_LOG_PATH=./debug.log ansible-playbook site.yml -vvv
+
+# Recovery
+ansible-playbook tasks/recover_ssh.yml
+ansible-playbook site.yml --tags "rollback" -e "component=kernel"
+
+=== 6. TESTING ===
+# Linting
+ansible-lint site.yml --profile=production
+yamllint .
+
+# Integration tests
+cd tests/
+molecule test -s alpine-lts
+pytest -v
+
+=== 7. CUSTOMIZATION ===
+# Template overrides
+ansible-playbook site.yml -e "sshd_template=custom/ssh_config.j2"
+
+=== 8. TROUBLESHOOTING ===
+# Service checks
+ansible all -i inventory/production/hosts.yml -m shell -a "systemctl status auditd"
+
+# Facts inspection
+ansible -i inventory/production/hosts.yml -m setup all
+
+=== RESOURCES ===
+CIS Alpine: https://www.cisecurity.org
+Docker CIS: https://www.cisecurity.org/benchmark/docker
+IM8 Guidelines: https://www.csa.gov.sg
+
+=== NOTES ===
+1. Always test in staging first
+2. Use --check --diff for dry runs
+3. -vvv enables debug mode
+4. Reports save to ./reports/
