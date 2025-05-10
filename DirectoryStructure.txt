@@ -1,0 +1,83 @@
+Directory structure of: F:\github\docker-full-stack\ansible
+Generated on: 05/10/2025 10:03:04
+
++---.ansible-lint
++---ansible.cfg
++---banner
++---CHEATSHEET.txt
++---[compliance]
+|   +---cis.yml
+|   +---cis_docker_host.yml
+|   +---csa_cyber_essentials.yml
+|   +---disa_stig.yml
+|   +---mas_trm.yml
+|   +---nist_800-53.yml
+|   +---sg_im8.yml
++---[defaults]
+|   +---main.yml
++---filestructure.txt
++---fixed_test.ps1
++---[handlers]
+|   +---main.yml
++---[inventory]
+|   +---[production]
+|   |   +---[group_vars]
+|   |   |   +---all.yml
+|   |   |   +---alpine_servers.yml
+|   |   |   +---container_host.yml
+|   |   |   +---high_security.yml
+|   |   +---hosts.yml
+|   +---[staging]
++---linode.sh
++---linode.yml
++---[logs]
+|   +---ansible.log
++---[meta]
+|   +---main.yml
++---README.md
++---remediate.yml
++---requirements.yml
++---site.yml
++---[tasks]
+|   +---01_preflight.yml
+|   +---02_minimal_install.yml
+|   +---03_kernel_hardening.yml
+|   +---04_filesystem.yml
+|   +---05_user_auth.yml
+|   +---06_services.yml
+|   +---07_logging.yml
+|   +---08_network.yml
+|   +---09_crypto.yml
+|   +---10_postflight.yml
+|   +---[docker]
+|   |   +---01_runtime.yml
+|   |   +---02_networking.yml
+|   |   +---03_userns.yml
+|   |   +---04_logging.yml
+|   |   +---05_container.yml
+|   |   +---06_host_integration.yml
++---[templates]
+|   +---compliance_report.json.j2
+|   +---[docker]
+|   |   +---[apparmor]
+|   |   |   +---docker-hardened.j2
+|   |   +---daemon.json.j2
+|   |   +---[seccomp]
+|   |   |   +---default.json.j2
+|   +---[etc]
+|   |   +---[audit]
+|   |   |   +---[rules.d]
+|   |   |   |   +---auditd.conf.j2
+|   |   |   |   +---im8.j2
+|   |   |   |   +---kernel-module-signing.cnf.j2
+|   |   |   |   +---login.defs.j2
+|   |   +---[iptables]
+|   |   |   +---rules.v4.j2
+|   |   +---[pam.d]
+|   |   |   +---system-login.j2
+|   |   +---[ssh]
+|   |   |   +---sshd_config.j2
+|   +---remediation_report.json.j2
++---[tests]
+|   +---im8_validation.sh
+|   +---test_docker_security.yml
