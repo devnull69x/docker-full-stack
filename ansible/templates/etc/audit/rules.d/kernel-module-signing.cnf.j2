@@ -1,0 +1,18 @@
+# templates/etc/kernel-module-signing.cnf.j2
+[ req ]
+default_bits = 4096
+distinguished_name = req_distinguished_name
+prompt = no
+x509_extensions = v3_ca
+string_mask = utf8only
+
+[ req_distinguished_name ]
+O = {{ kernel_signing_org | default("SecureOrg") }}
+CN = {{ kernel_signing_cn | default("Kernel Signing Key") }}
+emailAddress = {{ kernel_signing_email | default("security@example.com") }}
+
+[ v3_ca ]
+basicConstraints=CA:FALSE
+keyUsage=digitalSignature
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid

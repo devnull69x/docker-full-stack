@@ -1,0 +1,26 @@
+---
+# handlers/main.yml - Docker Service Management
+- name: restart docker
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+    enabled: yes
+  when: docker_required | default(false)
+
+- name: reload docker
+  ansible.builtin.service:
+    name: docker
+    state: reloaded
+  when: docker_required | default(false)
+
+- name: restart auditd
+  ansible.builtin.service:
+    name: auditd
+    state: restarted
+    enabled: yes
+  when: sg_regulated | default(false)
+
+- name: apply sysctl
+  ansible.builtin.command: sysctl --system
+  register: sysctl_result
+  changed_when: "'applied' in sysctl_result.stdout"

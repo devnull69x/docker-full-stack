@@ -1,0 +1,54 @@
+# {{ ansible_managed }}
+# Hardened SSH Configuration (CIS 5.2.x, NIST AC-17, STIG V-204418)
+
+# Basic Configuration
+Port 22
+ListenAddress {{ ssh_listen_address | default('0.0.0.0') }}
+Protocol 2
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+# Cryptography Settings
+KexAlgorithms {{ crypto_policies.ssh_algorithms.kex | default('curve25519-sha256') }}
+Ciphers {{ crypto_policies.ssh_algorithms.ciphers | default('chacha20-poly1305@openssh.com,aes256-gcm@openssh.com') }}
+MACs {{ crypto_policies.ssh_algorithms.macs | default('hmac-sha2-512') }}
+HostKeyAlgorithms {{ crypto_policies.ssh_algorithms.hostkey | default('ssh-ed25519,rsa-sha2-512') }}
+
+# Authentication Settings
+LoginGraceTime 60
+PermitRootLogin {{ ssh_permit_root_login | default('no') }}
+MaxAuthTries 4
+MaxSessions 10
+PubkeyAuthentication yes
+PasswordAuthentication {{ ssh_password_auth | default('no') }}
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+
+# Security Restrictions
+AllowAgentForwarding no
+AllowTcpForwarding {{ ssh_allow_tcp_forwarding | default('no') }}
+X11Forwarding no
+PermitUserEnvironment no
+ClientAliveInterval 300
+ClientAliveCountMax 0
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Access Controls
+{% if ssh_allowed_users is defined %}
+AllowUsers {{ ssh_allowed_users | join(' ') }}
+{% endif %}
+{% if ssh_allowed_groups is defined %}
+AllowGroups {{ ssh_allowed_groups | join(' ') }}
+{% endif %}
+
+# Advanced Protection
+UsePAM yes
+UsePrivilegeSeparation sandbox
+Compression no
+StrictModes yes
+IgnoreRhosts yes
+PrintMotd no
+PrintLastLog yes

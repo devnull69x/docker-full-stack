@@ -1,0 +1,112 @@
+---
+# tasks/08_network.yml - Network Stack Hardening
+# Aligns with CIS 3.x, NIST SC-7, and STIG network requirements
+
+- name: "08 - Network Configuration Hardening"
+  block:
+    # ======================
+    # 1. KERNEL PARAMETERS
+    # ======================
+    - name: "1.1 - Configure network kernel parameters"
+      ansible.builtin.sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop: "{{ sysctl_network | dict2items }}"
+      tags:
+        - cis
+        - kernel
+
+    # ======================
+    # 2. FIREWALL CONFIGURATION
+    # ======================
+    - name: "2.1 - Ensure iptables is installed"
+      ansible.builtin.package:
+        name: iptables
+        state: present
+      when: ansible_facts.os_family == "Alpine"
+
+    - name: "2.2 - Configure base firewall rules"
+      ansible.builtin.copy:
+        dest: "/etc/iptables/rules.v4"
+        content: |
+          *filter
+          :INPUT DROP [0:0]
+          :FORWARD DROP [0:0]
+          :OUTPUT ACCEPT [0:0]
+          -A INPUT -i lo -j ACCEPT
+          -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+          -A INPUT -p tcp --dport 22 -j ACCEPT
+          COMMIT
+        owner: root
+        group: root
+        mode: "0600"
+      notify: restart iptables
+
+    # ======================
+    # 3. SERVICE HARDENING
+    # ======================
+    - name: "3.1 - Disable unnecessary network services"
+      ansible.builtin.service:
+        name: "{{ item }}"
+        enabled: false
+        state: stopped
+      loop: "{{ disabled_services }}"
+      when: ansible_facts.packages[item] is defined
+
+    # ======================
+    # 4. TCP WRAPPERS
+    # ======================
+    - name: "4.1 - Configure TCP Wrappers"
+      ansible.builtin.copy:
+        dest: "/etc/hosts.deny"
+        content: |
+          ALL: ALL
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "4.2 - Configure allowed hosts"
+      ansible.builtin.copy:
+        dest: "/etc/hosts.allow"
+        content: |
+          sshd: LOCAL
+        owner: root
+        group: root
+        mode: "0644"
+
+  vars:
+    # Network hardening parameters (CIS 3.1.1-3.3.9)
+    sysctl_network:
+      net.ipv4.conf.all.send_redirects: 0
+      net.ipv4.conf.default.send_redirects: 0
+      net.ipv4.conf.all.accept_redirects: 0
+      net.ipv4.conf.default.accept_redirects: 0
+      net.ipv4.conf.all.secure_redirects: 0
+      net.ipv4.conf.default.secure_redirects: 0
+      net.ipv4.icmp_echo_ignore_broadcasts: 1
+      net.ipv4.icmp_ignore_bogus_error_responses: 1
+      net.ipv4.tcp_syncookies: 1
+      net.ipv6.conf.all.accept_redirects: 0
+      net.ipv6.conf.default.accept_redirects: 0
+
+    # Services to disable (CIS 2.2.x)
+    disabled_services:
+      - rpcbind
+      - avahi-daemon
+      - snmpd
+
+  hosts: all
+  become: true
+  tags:
+    - network
+    - firewall
+    - cis
+    - stig
+
+  handlers:
+    - name: restart iptables
+      ansible.builtin.service:
+        name: iptables
+        state: restarted

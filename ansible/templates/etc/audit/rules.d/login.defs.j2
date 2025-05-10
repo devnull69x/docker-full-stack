@@ -1,0 +1,4 @@
+PASS_MAX_DAYS {{ password_policy.max_days | default(90) }}
+PASS_MIN_DAYS {{ password_policy.min_days | default(7) }}
+PASS_WARN_AGE {{ password_policy.warn_days | default(14) }}
+ENCRYPT_METHOD SHA512

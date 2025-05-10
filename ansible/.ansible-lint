@@ -1,0 +1,44 @@
+---
+# Security-focused linting for Alpine hardening
+extends: safety # Start with security-best-practices profile
+
+# Mandatory rules for hardening projects
+enable_plugins:
+  - core
+  - hardening
+  - yamllint
+
+# Critical security checks (cannot be disabled)
+mandatory_rules:
+  - no-jinja-when # Prevent insecure conditional execution
+  - no-risky-sudo # Require full sudo paths
+  - no-free-form # Ban inline shell commands
+
+# Custom rule configuration
+rules:
+  no-changed-when: error # Force explicit idempotence
+  no-relative-paths: error
+  risky-file-permissions:
+    level: error
+    modes: ["0777", "0770", "0700"] # Allowed modes
+
+# Exclusions (safe for hardening)
+skip_list:
+  - role-name # Allow complex role names
+  - name[play] # Permit long play names
+
+# Metadata
+required_version: ">=6.0.0"
+strict: true
+parseable: true
+warn_list: [] # All warnings treated as errors
+
+# Hardening-specific tags
+tags:
+  required:
+    - security
+    - cis
+    - stig
+  optional:
+    - docker
+    - im8

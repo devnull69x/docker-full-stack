@@ -1,0 +1,113 @@
+---
+# tasks/09_crypto.yml - Cryptographic Controls Configuration
+# Aligns with CIS 5.3.x, NIST SC-13, and FIPS 140-2 requirements
+
+- name: "09 - Cryptographic Controls Hardening"
+  block:
+    # ======================
+    # 1. TLS CONFIGURATION
+    # ======================
+    - name: "1.1 - Set global crypto policy"
+      ansible.builtin.file:
+        path: "/etc/crypto-policies/back-ends/openssl.config"
+        state: touch
+        mode: "0644"
+      when: ansible_facts.os_family == "RedHat"
+
+    - name: "1.2 - Configure OpenSSL (Alpine)"
+      ansible.builtin.copy:
+        dest: "/etc/ssl/openssl.cnf"
+        content: |
+          [default_conf]
+          ssl_conf = ssl_sect
+
+          [ssl_sect]
+          system_default = system_default_sect
+
+          [system_default_sect]
+          MinProtocol = {{ crypto_policies.min_tls_version }}
+          CipherString = {{ crypto_policies.cipher_list }}
+        owner: root
+        group: root
+        mode: "0644"
+      when: ansible_facts.os_family == "Alpine"
+
+    # ======================
+    # 2. SSH HARDENING
+    # ======================
+    - name: "2.1 - Configure SSH cryptographic algorithms"
+      ansible.builtin.lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regexp: "^{{ item.key }}"
+        line: "{{ item.key }} {{ item.value }}"
+        state: present
+      loop:
+        - {
+            key: "KexAlgorithms",
+            value: "{{ crypto_policies.ssh_algorithms.kex }}",
+          }
+        - {
+            key: "HostKeyAlgorithms",
+            value: "{{ crypto_policies.ssh_algorithms.hostkey }}",
+          }
+        - {
+            key: "Ciphers",
+            value: "{{ crypto_policies.ssh_algorithms.ciphers }}",
+          }
+        - { key: "MACs", value: "{{ crypto_policies.ssh_algorithms.macs }}" }
+      notify: restart sshd
+
+    # ======================
+    # 3. FIPS COMPLIANCE
+    # ======================
+    - name: "3.1 - Enable FIPS mode if required"
+      ansible.builtin.command: |
+        fips-mode-setup --enable
+      when:
+        - ansible_facts.os_family == "RedHat"
+        - enable_fips | default(false)
+      register: fips_result
+      changed_when: "'FIPS mode is enabled' not in fips_result.stdout"
+
+    # ======================
+    # 4. RANDOM NUMBER GENERATION
+    # ======================
+    - name: "4.1 - Configure haveged for entropy"
+      ansible.builtin.package:
+        name: haveged
+        state: present
+      when: ansible_facts.os_family == "Alpine"
+
+    - name: "4.2 - Enable haveged service"
+      ansible.builtin.service:
+        name: haveged
+        enabled: true
+        state: started
+      when: ansible_facts.os_family == "Alpine"
+
+  vars:
+    # Crypto policies (CIS 5.3.1-5.3.4)
+    crypto_policies:
+      min_tls_version: "TLSv1.2"
+      cipher_list: "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+      dh_param_size: 2048
+      ssh_algorithms:
+        kex: "curve25519-sha256"
+        hostkey: "ssh-ed25519,rsa-sha2-512"
+        ciphers: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com"
+        macs: "hmac-sha2-512"
+
+  hosts: all
+  become: true
+  tags:
+    - crypto
+    - tls
+    - ssh
+    - fips
+    - cis
+
+  handlers:
+    - name: restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

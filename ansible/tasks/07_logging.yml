@@ -1,0 +1,111 @@
+---
+# tasks/07_logging.yml - Centralized Logging & Auditing Configuration
+# Hardens auditd and system logging per CIS 4.x, NIST AU-3, and STIG requirements
+
+- name: "07 - System Logging & Auditing Hardening"
+  block:
+    - name: "1.1 - Install auditd package"
+      ansible.builtin.package:
+        name: audit
+        state: present
+
+    - name: "1.2 - Configure auditd"
+      ansible.builtin.template:
+        src: "templates/etc/audit/auditd.conf.j2"
+        dest: "/etc/audit/auditd.conf"
+        owner: root
+        group: root
+        mode: "0640"
+      notify: restart auditd
+
+    # ======================
+    # 2. AUDIT RULES
+    # ======================
+    - name: "2.1 - Deploy core audit rules (CIS 4.1.2-4.1.18)"
+      ansible.builtin.copy:
+        dest: "/etc/audit/rules.d/10-hardening.rules"
+        content: |
+          # System Events
+          -a always,exit -F arch=b64 -S execve -k exec_commands
+          -a always,exit -F arch=b32 -S execve -k exec_commands
+
+          # Critical Files
+          {% for file in critical_files %}
+          -w {{ file }} -p wa -k critical_config
+          {% endfor %}
+
+          # Authentication Events
+          -w /var/log/faillog -p wa -k logins
+          -w /var/log/lastlog -p wa -k logins
+        owner: root
+        group: root
+        mode: "0640"
+      notify: restart auditd
+
+    # ======================
+    # 3. LOG MANAGEMENT
+    # ======================
+    - name: "3.1 - Configure log rotation"
+      ansible.builtin.copy:
+        dest: "/etc/logrotate.d/audit"
+        content: |
+          /var/log/audit/audit.log {
+            rotate 30
+            daily
+            compress
+            missingok
+            notifempty
+            create 0600 root root
+          }
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "3.2 - Set log file permissions"
+      ansible.builtin.file:
+        path: "/var/log/audit/"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    # ======================
+    # 4. SERVICE MANAGEMENT
+    # ======================
+    - name: "4.1 - Ensure auditd is running"
+      ansible.builtin.service:
+        name: auditd
+        enabled: true
+        state: started
+
+  vars:
+    # Auditd Configuration (CIS 4.1.1)
+    auditd_settings:
+      log_file: "/var/log/audit/audit.log"
+      max_log_file: 50 # MB
+      max_log_file_action: "keep_logs"
+      space_left: 75 # MB (triggers email alert)
+      admin_space_left: 50 # MB (triggers system halt)
+      flush: "incremental_async"
+
+    # Files to monitor (STIG V-204442)
+    critical_files:
+      - /etc/passwd
+      - /etc/shadow
+      - /etc/sudoers
+      - /etc/ssh/sshd_config
+
+  hosts: all
+  become: true
+  tags:
+    - logging
+    - audit
+    - cis
+    - stig
+    - nist
+
+  handlers:
+    - name: restart auditd
+      ansible.builtin.service:
+        name: auditd
+        state: restarted

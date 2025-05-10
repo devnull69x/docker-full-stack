@@ -1,0 +1,53 @@
+---
+# tasks/docker/06_host_integration.yml - CIS Docker 6.1-6.8 Host Integration
+- name: "[DOCKER-CIS-6.1] Enable iptables firewall rules"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"iptables":'
+    line: '  "iptables": {{ docker_iptables_enabled | default(true) | to_json }},'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_host
+
+- name: "[DOCKER-CIS-6.2] Configure cgroup restrictions"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"cgroup-parent":'
+    line: '  "cgroup-parent": "{{ docker_cgroup_parent | default("system.slice") }}",'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_host
+
+- name: "[DOCKER-CIS-6.5] Secure Docker socket permissions"
+  ansible.builtin.file:
+    path: "/var/run/docker.sock"
+    owner: root
+    group: docker
+    mode: "0660"
+  when: docker_required | default(false)
+  tags: docker_host
+
+- name: "[DOCKER-CIS-6.8] Enable live-restore for container stability"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"live-restore":'
+    line: '  "live-restore": {{ docker_live_restore | default(true) | to_json }},'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_host
+
+- name: "[IM8] Apply host-level kernel hardening"
+  ansible.builtin.sysctl:
+    name: "kernel.unprivileged_userns_clone"
+    value: "0"
+    state: present
+    reload: yes
+  when:
+    - docker_required | default(false)
+    - sg_regulated | default(false)
+  tags:
+    - docker_host
+    - im8_compliance

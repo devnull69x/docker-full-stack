@@ -1,0 +1,55 @@
+---
+# tasks/03_kernel_hardening.yml - CIS 3.1-3.5, NIST SC-7
+- name: "[KERNEL-1] Apply kernel parameters"
+  ansible.builtin.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    reload: yes
+    state: present
+  loop: "{{ kernel_settings | dict2items }}"
+  tags: kernel
+
+- name: "[KERNEL-2] Disable unnecessary modules"
+  ansible.builtin.file:
+    path: "/etc/modprobe.d/{{ item.name }}.conf"
+    content: "install {{ item.name }} /bin/false"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ disabled_kernel_modules }}"
+  notify: load sysctl
+  tags: kernel
+
+- name: "[KERNEL-3] Secure /proc/config.gz"
+  ansible.builtin.file:
+    path: /proc/config.gz
+    state: absent
+  when: hardening_level == "high"
+  tags: kernel
+
+- name: "[KERNEL-4] Configure kernel module signing"
+  block:
+    - name: Ensure signing key exists
+      ansible.builtin.command: >
+        openssl req -new -nodes -utf8 -sha256 -days 36500
+        -batch -x509 -config /etc/kernel-module-signing.cnf
+        -outform DER -out /etc/kernel_key.der
+        -keyout /etc/kernel_key.priv
+      args:
+        creates: /etc/kernel_key.der
+      when: hardening_level == "high"
+
+    - name: Update kernel config
+      ansible.builtin.lineinfile:
+        path: /etc/mkinitfs/mkinitfs.conf
+        line: 'features="base console ext4 keymap kms lvm mdraid squashfs usb virtio module_signing"'
+        regexp: "^features="
+      when: hardening_level == "high"
+  tags: kernel
+
+- name: "[KERNEL-5] Load hardened settings"
+  ansible.builtin.command: sysctl --system
+  register: sysctl_load
+  changed_when: "'applied' in sysctl_load.stdout"
+  tags: kernel

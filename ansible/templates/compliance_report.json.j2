@@ -1,0 +1,19 @@
+{
+  "timestamp": "{{ ansible_date_time.iso8601 }}",
+  "system": {
+    "kernel": {
+      "ptrace_scope": "{% if 'kernel.yama.ptrace_scope = 1' in kernel_checks.stdout %}PASS{% else %}FAIL{% endif %}",
+      "kptr_restrict": "{% if 'kernel.kptr_restrict = 2' in kernel_checks.stdout %}PASS{% else %}FAIL{% endif %}"
+    }
+  },
+  "docker": {
+    "security": {
+      "seccomp": "{% if 'name=seccomp' in docker_security.stdout %}PASS{% else %}FAIL{% endif %}",
+      "apparmor": "{% if 'name=apparmor' in docker_security.stdout %}PASS{% else %}FAIL{% endif %}"
+    },
+    "userns": "{{ dockerd_user.stdout }}"
+  },
+  "compliance": {
+    "im8": "{% if audit_rule_count.stdout | int >= 5 %}PASS{% else %}FAIL{% endif %}"
+  }
+}

@@ -1,0 +1,62 @@
+---
+# CIS Docker Host Benchmark - Alpine Linux Edition
+# Applies when: 'docker_required: true' in host vars
+# Profile: {{ cis_docker_profile | default('hardened') }}
+
+controls:
+  - id: docker_1.1.1
+    title: "Ensure Docker is installed from trusted repos"
+    tasks:
+      - tasks/docker/01_runtime.yml
+    audit: "apk info docker | grep -q 'docker-{{ docker_version | default('24.0') }}'"
+    remediation: |
+      apk del docker
+      apk add docker@edge-community
+    severity: high
+    level: 1
+
+  - id: docker_2.1
+    title: "Ensure network traffic is restricted between containers"
+    tasks:
+      - tasks/docker/02_networking.yml
+    audit: 'docker network inspect bridge | jq ''.[0].Options["com.docker.network.bridge.enable_icc"]'' | grep -q ''false'''
+    remediation: |
+      echo '{"icc": false}' > /etc/docker/daemon.json
+      rc-service docker restart
+    severity: critical
+    level: 1
+    condition: "cis_docker_profile != 'permissive'"
+
+  - id: docker_5.25
+    title: "Ensure Docker is allowed to make changes to iptables"
+    tasks:
+      - tasks/docker/06_host_integration.yml
+    audit: 'grep -q ''"iptables": false'' /etc/docker/daemon.json && echo ''Fail'' || echo ''Pass'''
+    remediation: |
+      echo '{"iptables": true}' >> /etc/docker/daemon.json
+      rc-service docker restart
+    severity: medium
+    level: 2
+
+profiles:
+  - name: "permissive"
+    description: "Minimum controls for dev environments"
+    includes: [docker_1.1.1]
+
+  - name: "hardened"
+    description: "Production-ready security (CIS L1)"
+    includes: [docker_1.1.1, docker_2.1]
+
+  - name: "strict"
+    description: "Maximum isolation (CIS L2 + extras)"
+    includes: "*"
+
+metadata:
+  source: "CIS Docker Benchmark v1.4.0"
+  os: "Alpine Linux"
+  requires:
+    ansible: ">=2.12"
+    docker: ">=24.0"
+  notes: |
+    Apply with: 
+    ansible-playbook site.yml -e "docker_required=true cis_docker_profile=hardened"

@@ -1,0 +1,53 @@
+---
+# tasks/01_preflight.yml - System Validation Checks
+- name: "[PREFLIGHT-1] Verify Ansible version"
+  ansible.builtin.assert:
+    that: ansible_version.full is version_compare('2.12', '>=')
+    msg: "Requires Ansible 2.12 or higher"
+  tags: always
+
+- name: "[PREFLIGHT-2] Confirm Alpine Linux"
+  block:
+    - name: Check distribution
+      ansible.builtin.assert:
+        that: ansible_distribution == 'Alpine'
+        msg: "This role only works on Alpine Linux"
+
+    - name: Verify minimum version
+      ansible.builtin.assert:
+        that: ansible_distribution_version is version_compare('3.18', '>=')
+        msg: "Requires Alpine Linux 3.18+"
+  tags: always
+
+- name: "[PREFLIGHT-3] Validate system architecture"
+  ansible.builtin.assert:
+    that: ansible_architecture in ['x86_64', 'aarch64']
+    msg: "Unsupported architecture {{ ansible_architecture }}"
+  tags: always
+
+- name: "[PREFLIGHT-4] Check critical mounts"
+  ansible.builtin.command: findmnt --verify --all
+  register: mount_check
+  changed_when: false
+  failed_when: mount_check.rc != 0
+  tags: filesystem
+
+- name: "[PREFLIGHT-5] Verify package integrity"
+  ansible.builtin.command: apk verify --no-network
+  register: pkg_verify
+  changed_when: false
+  failed_when: pkg_verify.stdout != ""
+  tags: packages
+
+- name: "[PREFLIGHT-6] Check for rootkit signs"
+  block:
+    - name: Scan for known rootkits
+      ansible.builtin.command: rkhunter --check --sk
+      register: rkhunter_scan
+      changed_when: false
+      failed_when: "'Warning:' in rkhunter_scan.stdout"
+
+    - name: Verify critical binaries
+      ansible.builtin.command: sha256sum -c /etc/binaries.sha256
+      when: inventory_hostname in groups['high_security']
+  tags: security

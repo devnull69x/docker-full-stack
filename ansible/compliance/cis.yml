@@ -1,0 +1,64 @@
+---
+# CIS Alpine Linux Benchmark + Docker Hardening
+# Version: v1.1.0
+# Updated: 2024-03-20
+
+controls:
+  - id: cis_1.1.1
+    title: "Ensure mounting of cramfs filesystems is disabled"
+    tasks:
+      - tasks/03_kernel_hardening.yml
+    audit: "lsmod | grep -i cramfs"
+    remediation: "echo 'install cramfs /bin/true' >> /etc/modprobe.d/cramfs.conf"
+    severity: high
+    level: 1
+
+  - id: cis_1.2.1
+    title: "Ensure package manager repositories are configured"
+    tasks:
+      - tasks/02_minimal_install.yml
+    audit: "apk -v info"
+    remediation: "apk update && apk upgrade"
+    severity: medium
+    level: 1
+
+docker_controls:
+  - id: cis_docker_1.1
+    title: "Ensure Docker is installed from official repos"
+    tasks:
+      - tasks/docker/01_runtime.yml
+    audit: |
+      apk -q info docker | grep -q 'docker' && \
+      docker --version | grep -q 'Docker version'
+    remediation: "apk add docker --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community"
+    severity: medium
+    level: 1
+    condition: "docker_required == true"
+
+  - id: cis_docker_2.1
+    title: "Ensure inter-container communication is disabled (--icc=false)"
+    tasks:
+      - tasks/docker/01_runtime.yml
+    audit: 'grep -q ''"icc": false'' /etc/docker/daemon.json'
+    remediation: |
+      echo '{"icc": false}' > /etc/docker/daemon.json
+      systemctl restart docker
+    severity: high
+    level: 1
+    condition: "docker_required == true"
+
+metadata:
+  benchmark:
+    name: "CIS Alpine Linux + Docker"
+    version: "1.1.0"
+  profiles:
+    - name: "Level 1 - Docker Enabled"
+      description: "Base security + essential Docker hardening"
+      requires: "docker_required=true"
+    - name: "Level 2 - Strict Docker"
+      description: "All Level 1 + user namespace isolation"
+      requires: "cis_docker_profile == 'hardened'"
+  requirements:
+    ansible: ">=2.12"
+    alpine: ">=3.18"
+    docker: ">=20.10"

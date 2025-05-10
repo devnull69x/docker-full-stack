@@ -1,0 +1,103 @@
+---
+# group_vars/all.yml - Cross-host Security Baseline
+
+### Core Security Profile ###
+hardening_level: "high" # low|medium|high
+enable_fips: false
+auditd_enabled: true
+unattended_upgrades: true
+
+### Package Management ###
+unnecessary_packages:
+  - telnetd
+  - rpcbind
+  - xinetd
+  - avahi
+  - cups
+  - nfs-utils
+
+locked_packages:
+  - openssl
+  - libssl3
+  - busybox
+  - alpine-baselayout
+  - apk-tools
+
+hardening_tools:
+  - rkhunter
+  - aide
+  - auditd
+  - clamav
+  - fail2ban
+
+### Kernel Hardening ###
+kernel_settings:
+  # Memory Protections
+  kernel.exec-shield: 1
+  kernel.randomize_va_space: 2
+  # Network Security
+  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.conf.default.rp_filter: 1
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  # Kernel Exposures
+  kernel.kptr_restrict: 2
+  kernel.dmesg_restrict: 1
+  kernel.yama.ptrace_scope: 1
+
+disabled_kernel_modules:
+  - { name: bluetooth }
+  - { name: firewire-core }
+  - { name: usb-storage }
+  - { name: net-pf-31 } # AppleTalk
+
+### Filesystem Protections ###
+mount_options:
+  /tmp: "noexec,nosuid,nodev"
+  /var/tmp: "noexec,nosuid,nodev,bind"
+  /dev/shm: "noexec,nosuid,nodev"
+  /boot: "nosuid,nodev"
+  /home: "nosuid,nodev"
+
+### SSH Hardening ###
+sshd_config:
+  PermitRootLogin: "no"
+  PasswordAuthentication: "no"
+  ChallengeResponseAuthentication: "no"
+  X11Forwarding: "no"
+  MaxAuthTries: 3
+  ClientAliveInterval: 300
+  AllowTcpForwarding: "no"
+  PermitEmptyPasswords: "no"
+
+### User Management ###
+password_policy:
+  minlen: 12
+  difok: 5
+  remember: 5
+  maxrepeat: 3
+  dictcheck: 1
+  ucredit: -1
+  lcredit: -1
+  dcredit: -1
+  ocredit: -1
+
+### Compliance Profiles ###
+compliance:
+  cis:
+    profile: "hardened"
+    fail_on_exception: true
+  im8:
+    enabled: false
+    profile: "essential"
+  nist:
+    level: "moderate"
+    controls: ["AC-3", "AC-6", "SI-2"]
+
+### Monitoring ###
+logging:
+  remote_syslog: "syslog.example.com:514"
+  log_retention_days: 90
+  audit:
+    max_log_file: 50
+    max_log_file_action: "keep_logs"
+    space_left_action: "email"

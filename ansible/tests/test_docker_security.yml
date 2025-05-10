@@ -1,0 +1,56 @@
+---
+# tests/test_docker_security.yml - Docker Security Integration Tests
+- hosts: docker_hosts
+  become: true
+  vars_files:
+    - ../vars/production.yml
+    - ../group_vars/container_host.yml
+
+  tasks:
+    - name: Verify Docker daemon configuration
+      ansible.builtin.command: docker info --format '{{ "{{json .}}"'
+      register: docker_info
+      changed_when: false
+
+    - name: Check seccomp profile enforcement
+      ansible.builtin.assert:
+        that:
+          - "'seccomp' in docker_info.stdout"
+          - "'default.json' in docker_info.stdout"
+      tags: security
+
+    - name: Verify AppArmor profile
+      ansible.builtin.command: docker inspect --format '{{ "{{.AppArmorProfile}}" }}' $(docker ps -lq)
+      register: apparmor_check
+      changed_when: false
+      failed_when: "'docker-hardened' not in apparmor_check.stdout"
+
+    - name: Validate user namespace remapping
+      ansible.builtin.command: ps -p $(pgrep dockerd) -o pid,user
+      register: dockerd_user
+      changed_when: false
+      failed_when: "'dockremap' not in dockerd_user.stdout"
+
+    - name: Test network isolation
+      ansible.builtin.command: docker network inspect bridge --format '{{ "{{.Options}}" }}'
+      register: network_icc
+      changed_when: false
+      failed_when: "'false' not in network_icc.stdout"
+
+    - name: Verify logging configuration
+      ansible.builtin.command: docker info --format '{{ "{{.LoggingDriver}}" }}'
+      register: logging_driver
+      changed_when: false
+      failed_when: "'json-file' not in logging_driver.stdout"
+
+    - name: Check IM8 audit rules
+      ansible.builtin.command: auditctl -l | grep docker
+      register: audit_rules
+      changed_when: false
+      failed_when: audit_rules.stdout_lines | length < 5
+
+    - name: Validate runtime restrictions
+      ansible.builtin.command: docker inspect --format '{{ "{{.HostConfig.NoNewPrivileges}}" }}' $(docker ps -lq)
+      register: no_new_privs
+      changed_when: false
+      failed_when: "'true' not in no_new_privs.stdout"

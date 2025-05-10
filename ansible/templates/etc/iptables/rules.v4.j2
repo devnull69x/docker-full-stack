@@ -1,0 +1,43 @@
+# {{ ansible_managed }}
+# Hardened iptables Configuration (CIS 3.5.x, NIST SC-7, STIG V-204418)
+
+*filter
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [0:0]
+
+# Base Protections
+-A INPUT -m conntrack --ctstate INVALID -j DROP
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+
+# ICMP (Limited)
+-A INPUT -p icmp --icmp-type echo-request -m limit --limit 1/second -j ACCEPT
+
+# SSH Access
+{% if ssh_allowed_ips is defined %}
+{% for ip in ssh_allowed_ips %}
+-A INPUT -p tcp --dport 22 -s {{ ip }} -j ACCEPT
+{% endfor %}
+{% else %}
+-A INPUT -p tcp --dport 22 -j ACCEPT
+{% endif %}
+
+# Docker Rules (Conditional)
+{% if docker_required | default(false) %}
+-A INPUT -s 172.17.0.0/16 -j ACCEPT
+-A FORWARD -i docker0 -o docker0 -j ACCEPT
+{% endif %}
+
+# Application-Specific Rules
+{% if extra_firewall_rules is defined %}
+{% for rule in extra_firewall_rules %}
+{{ rule }}
+{% endfor %}
+{% endif %}
+
+# Final Logging
+-A INPUT -j LOG --log-prefix "IPTABLES-DROPPED: " --log-level 4
+-A FORWARD -j LOG --log-prefix "IPTABLES-FORWARD-DROPPED: " --log-level 4
+
+COMMIT

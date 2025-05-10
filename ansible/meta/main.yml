@@ -1,0 +1,27 @@
+---
+# meta/main.yml - Role Metadata
+galaxy_info:
+  author: "devnull69x"
+  description: "Enterprise-grade Alpine Linux hardening with Docker security"
+  company: "Your Organization"
+  license: "GPL-3.0"
+  min_ansible_version: "2.12"
+  platforms:
+    - name: "Alpine"
+      versions:
+        - "all"
+  galaxy_tags:
+    - "security"
+    - "hardening"
+    - "cis"
+    - "im8"
+    - "docker"
+
+dependencies:
+  - role: "geerlingguy.pip"
+    when: "ansible_python_interpreter != '/usr/bin/python3'"
+  - role: "geerlingguy.docker"
+    when: "docker_required | default(false)"
+
+# Role defaults
+allow_duplicates: false

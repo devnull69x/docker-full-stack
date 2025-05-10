@@ -1,0 +1,61 @@
+---
+# defaults/main.yml - Safe Default Values
+
+### Core Hardening Settings ###
+hardening_level: "high" # [low|medium|high]
+enable_fips: false
+auditd_enabled: true
+
+### System Configuration ###
+# Kernel hardening
+kernel_settings:
+  kernel.yama.ptrace_scope: 1
+  kernel.kptr_restrict: 2
+  net.ipv4.conf.all.rp_filter: 1
+
+# Filesystem protections
+mount_options:
+  /tmp: "noexec,nosuid,nodev"
+  /var/tmp: "noexec,nosuid,nodev,bind"
+
+### User Authentication ###
+pam_settings:
+  password:
+    minlen: 12
+    difok: 5
+    remember: 5
+  faillock:
+    deny: 5
+    unlock_time: 900
+
+### Docker Security Defaults ###
+docker_required: false
+docker_config:
+  icc: false
+  userns_remap: "default"
+  no_new_privileges: true
+  seccomp_profile: "/etc/docker/seccomp/default.json"
+  log_level: "info"
+  log_driver: "json-file"
+  log_opts:
+    max-size: "10m"
+    max-file: "3"
+
+### Compliance Profiles ###
+compliance:
+  cis:
+    profile: "hardened" # [server|l1|l2|hardened]
+  im8:
+    enabled: false
+    profile: "essential" # [essential|enhanced|financial]
+  nist:
+    level: "moderate" # [low|moderate|high]
+
+### Safe Service Defaults ###
+disabled_services:
+  - rpcbind
+  - avahi-daemon
+  - cups
+enabled_services:
+  - auditd
+  - sshd

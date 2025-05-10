@@ -1,0 +1,40 @@
+---
+# tasks/docker/01_runtime.yml - CIS Docker 1.1-1.2 Runtime Configuration
+- name: "[DOCKER-CIS-1.1] Ensure Docker is installed from trusted repos"
+  block:
+    - name: Verify installed Docker version
+      ansible.builtin.command: apk info docker
+      register: docker_version
+      changed_when: false
+      tags: docker_install
+
+    - name: Install Docker from edge-community
+      ansible.builtin.apk:
+        name: docker@edge-community
+        state: present
+        upgrade: yes
+      when: docker_version.stdout | regex_search('docker-{{ docker_version | default("24.0") }}') is none
+      tags: docker_install
+
+  when: docker_required | default(false)
+
+- name: "[DOCKER-CIS-1.2] Ensure Docker daemon configuration file exists"
+  ansible.builtin.template:
+    src: "templates/docker/daemon.json.j2"
+    dest: "/etc/docker/daemon.json"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_config
+
+- name: "[DOCKER-CIS-1.3] Ensure Docker daemon log level is set appropriately"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"log-level":'
+    line: '  "log-level": "{{ docker_log_level | default("info") }}",'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_config

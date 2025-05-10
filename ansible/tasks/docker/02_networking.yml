@@ -1,0 +1,47 @@
+---
+# tasks/docker/02_networking.yml - CIS Docker 2.1-2.18 Network Security
+- name: "[DOCKER-CIS-2.1] Ensure network traffic is restricted between containers"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"icc":'
+    line: '  "icc": {{ docker_icc_enabled | default(false) | to_json }},'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_network
+
+- name: "[DOCKER-CIS-2.2] Ensure Docker operates with user-defined networks only"
+  ansible.builtin.command: docker network rm bridge
+  ignore_errors: yes
+  changed_when: false
+  tags: docker_network
+
+- name: "[DOCKER-CIS-2.8] Enable userland proxy restriction"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"userland-proxy":'
+    line: '  "userland-proxy": {{ docker_userland_proxy | default(false) | to_json }},'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_network
+
+- name: "[DOCKER-CIS-2.13] Apply default network MTU"
+  ansible.builtin.command: |
+    docker network create --driver bridge \
+      --opt com.docker.network.driver.mtu={{ docker_mtu_size | default(1500) }} \
+      secure_default
+  when:
+    - docker_required | default(false)
+    - inventory_hostname in groups['docker_masters']
+  tags: docker_network
+
+- name: "[DOCKER-CIS-2.18] Disable IPv6 networking by default"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"ipv6":'
+    line: '  "ipv6": {{ docker_ipv6_enabled | default(false) | to_json }},'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_network

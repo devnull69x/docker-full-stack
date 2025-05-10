@@ -1,0 +1,56 @@
+---
+# inventory/production/group_vars/alpine_servers.yml
+# Base hardening configuration for non-Docker Alpine hosts
+
+### Core Security Profile ###
+hardening_level: "high"
+enable_fips: false
+auditd_enabled: true
+
+### System Hardening ###
+kernel_settings:
+  kernel.yama.ptrace_scope: 1
+  kernel.kptr_restrict: 2
+  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+
+### Filesystem Protections ###
+mount_options:
+  /tmp: "noexec,nosuid,nodev"
+  /var/tmp: "noexec,nosuid,nodev,bind"
+  /dev/shm: "noexec,nosuid,nodev"
+
+### Service Management ###
+disabled_services:
+  - rpcbind
+  - avahi-daemon
+  - xinetd
+enabled_services:
+  - auditd
+  - sshd
+  - fail2ban
+
+### SSH Hardening ###
+sshd_config:
+  PermitRootLogin: "no"
+  PasswordAuthentication: "no"
+  X11Forwarding: "no"
+  MaxAuthTries: 3
+  ClientAliveInterval: 300
+
+### Compliance Profiles ###
+compliance:
+  cis:
+    profile: "hardened"
+    exceptions: []
+  im8:
+    enabled: true
+    profile: "enhanced"
+  nist:
+    level: "moderate"
+    controls: ["AC-3", "AC-6", "SI-2"]
+
+### Monitoring ###
+logging:
+  remote_syslog: "syslog.example.com:514"
+  log_retention_days: 90

@@ -1,0 +1,33 @@
+---
+# tasks/02_minimal_install.yml - Package Minimization (CIS 1.1-1.2)
+- name: "[MINIMAL-1] Remove unnecessary packages"
+  ansible.builtin.apk:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ unnecessary_packages }}"
+  tags: packages
+
+- name: "[MINIMAL-2] Install security updates"
+  ansible.builtin.apk:
+    upgrade: yes
+    update_cache: yes
+  tags: packages
+
+- name: "[MINIMAL-3] Lock critical packages"
+  ansible.builtin.command: apk add --lock "{{ item }}"
+  loop: "{{ locked_packages }}"
+  tags: packages
+
+- name: "[MINIMAL-4] Verify package sources"
+  ansible.builtin.replace:
+    path: /etc/apk/repositories
+    regexp: "^http://"
+    replace: "https://"
+  notify: update apk cache
+  tags: packages
+
+- name: "[MINIMAL-5] Install hardening tools"
+  ansible.builtin.apk:
+    name: "{{ hardening_tools }}"
+    state: present
+  tags: security

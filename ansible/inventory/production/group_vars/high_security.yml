@@ -1,0 +1,103 @@
+---
+# inventory/production/group_vars/high_security.yml
+# PCI DSS/DISA STIG/Financial Grade Hardening
+
+### Core Security Profile ###
+hardening_level: "strict"
+enable_fips: true
+auditd_enabled: true
+enable_selinux: true
+enable_uefi_secureboot: true # New
+
+### Kernel Hardening ###
+kernel_settings:
+  kernel.yama.ptrace_scope: 2
+  kernel.kptr_restrict: 2
+  kernel.modules_disabled: 1
+  kernel.lockdown: "confidentiality" # New
+  net.ipv4.conf.all.rp_filter: 2
+  net.ipv4.tcp_syncookies: 2 # New SYN flood protection
+
+### Enhanced Filesystem Protections ###
+mount_options:
+  /: "nodev,noexec,nosuid,iversion"
+  /boot: "nodev,nosuid,iversion"
+  /tmp: "noexec,nosuid,nodev,tmpfs"
+  /var/tmp: "noexec,nosuid,nodev,bind,iversion"
+  /dev/shm: "noexec,nosuid,nodev,size=256M" # Added size limit
+
+### Mandatory Access Control ###
+apparmor_profiles:
+  - "docker-financial"
+  - "restrictive-v2" # Updated profile
+selinux_policies:
+  - "targeted"
+  - "mls" # Multi-Level Security
+
+### Compliance Enforcement ###
+compliance:
+  cis:
+    profile: "l2"
+    docker_profile: "l2" # Explicit Docker level
+  im8:
+    enabled: true
+    profile: "financial"
+    docker_controls: ["4.1", "4.5", "6.2"] # Added Docker specifics
+  nist:
+    level: "high"
+    controls: ["AC-6", "AU-3", "CM-6", "SC-7", "SI-4", "SI-7"] # Added SI-7
+  disa_stig:
+    enforcement: true
+    stig_ids: ["V-204442", "V-204496"] # Specific STIG items
+
+### Container Security ###
+docker_config:
+  icc: false
+  userns_remap: "isolated"
+  no_new_privileges: true
+  readonly_rootfs: true
+  seccomp_profile: "/etc/docker/seccomp/strict-v2.json" # Updated
+  apparmor_profile: "docker-financial"
+  capabilities:
+    drop: ["ALL"]
+    add: ["CHOWN", "NET_BIND_SERVICE"]
+  rootless: true # New rootless mode
+
+### Enhanced Audit Configuration ###
+audit_rules:
+  - "-a always,exit -F arch=b64 -S execve -k container_cmds"
+  - "-w /etc/docker -p wa -k docker_config"
+  - "-a always,exit -F path=/usr/bin/docker -F perm=x -k docker_cli"
+  - "-a always,exit -F arch=b64 -S mount -k filesystem_mount" # New
+  - "-w /etc/modprobe.d -p wa -k kernel_modules" # New
+
+### Monitoring & Alerting ###
+logging:
+  remote_syslog: "syslog.secure.example.com:6514"
+  log_retention_days: 365
+  alert_on_failures: true
+  splunk_hec_url: "https://splunk.example.com:8088/services/collector" # New
+  graylog_server: "graylog.secure.example.com:12201" # New
+
+### Cryptographic Controls ###
+crypto:
+  tls_min_version: "1.2"
+  ssh_algorithms: # New
+    kex: "curve25519-sha256"
+    hostkey: "ssh-ed25519"
+    cipher: "chacha20-poly1305@openssh.com"
+    mac: "hmac-sha2-512"
+
+mfa_packages:
+  - google-authenticator
+  - pam_google_authenticator
+  - oath-toolkit
+
+password_policy:
+  max_days: 90
+  min_days: 1
+  warn_days: 14
+  minlen: 12
+  difok: 5
+
+account_inactivity_days: 30

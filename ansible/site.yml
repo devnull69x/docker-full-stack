@@ -1,0 +1,64 @@
+# # Full hardening (systems + Docker)
+# ansible-playbook site.yml -i inventory/production -e "docker_required=true"
+
+# # Systems only
+# ansible-playbook site.yml --tags system
+
+# # Docker only
+# ansible-playbook site.yml --tags docker
+---
+# site.yml - Master Hardening Playbook
+- hosts: all
+  become: true
+  vars_files:
+    - vars/production.yml
+    - group_vars/alpine_servers.yml
+    - group_vars/container_host.yml
+
+  pre_tasks:
+    - name: Validate Ansible version
+      ansible.builtin.assert:
+        that: ansible_version.full is version_compare('2.12', '>=')
+        msg: "Requires Ansible 2.12+"
+
+  roles:
+    - role: alpine-hardening
+      tags: always
+
+  tasks:
+    - name: Include system hardening tasks
+      ansible.builtin.include_tasks: "{{ item }}"
+      loop:
+        - tasks/01_preflight.yml
+        - tasks/02_minimal_install.yml
+        - tasks/03_kernel_hardening.yml
+        - tasks/04_filesystem.yml
+        - tasks/05_user_auth.yml
+        - tasks/06_services.yml
+        - tasks/07_logging.yml
+        - tasks/08_network.yml
+        - tasks/09_crypto.yml
+      tags: system
+
+    - name: Include Docker hardening tasks
+      ansible.builtin.include_tasks: "{{ item }}"
+      loop:
+        - tasks/docker/01_runtime.yml
+        - tasks/docker/02_networking.yml
+        - tasks/docker/03_userns.yml
+        - tasks/docker/04_logging.yml
+        - tasks/docker/05_container.yml
+        - tasks/docker/06_host_integration.yml
+      when: docker_required | default(false)
+      tags: docker
+
+  post_tasks:
+    - name: Run compliance validation
+      ansible.builtin.include_tasks: tasks/10_postflight.yml
+      tags: validation
+
+    - name: Generate hardening report
+      ansible.builtin.template:
+        src: templates/report.j2
+        dest: "/var/log/hardening-report-{{ ansible_date_time.iso8601 }}.json"
+      tags: reporting

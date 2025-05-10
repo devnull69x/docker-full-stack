@@ -1,0 +1,188 @@
+{
+  "defaultAction": "SCMP_ACT_ERRNO",
+  "architectures": [
+    "SCMP_ARCH_X86_64",
+    "SCMP_ARCH_AARCH64"
+  ],
+  "syscalls": [
+    {
+      "names": [
+        "accept",
+        "access",
+        "alarm",
+        "bind",
+        "brk",
+        "capget",
+        "capset",
+        "chdir",
+        "chmod",
+        "chown",
+        "clock_gettime",
+        "clone",
+        "close",
+        "connect",
+        "copy_file_range",
+        "creat",
+        "dup",
+        "dup2",
+        "dup3",
+        "epoll_create",
+        "epoll_ctl",
+        "epoll_pwait",
+        "eventfd2",
+        "execve",
+        "exit",
+        "exit_group",
+        "faccessat",
+        "fadvise64",
+        "fallocate",
+        "fcntl",
+        "fdatasync",
+        "flock",
+        "fstat",
+        "fsync",
+        "ftruncate",
+        "futex",
+        "getcpu",
+        "getcwd",
+        "getdents",
+        "getegid",
+        "geteuid",
+        "getgid",
+        "getgroups",
+        "getpeername",
+        "getpgid",
+        "getpid",
+        "getppid",
+        "getsockname",
+        "getsockopt",
+        "getuid",
+        "inotify_add_watch",
+        "inotify_init",
+        "inotify_rm_watch",
+        "ioctl",
+        "kill",
+        "lchown",
+        "lseek",
+        "lstat",
+        "madvise",
+        "memfd_create",
+        "mkdir",
+        "mkdirat",
+        "mmap",
+        "mprotect",
+        "munmap",
+        "nanosleep",
+        "newfstatat",
+        "open",
+        "openat",
+        "pause",
+        "pipe",
+        "pipe2",
+        "poll",
+        "ppoll",
+        "prctl",
+        "pread64",
+        "preadv",
+        "prlimit64",
+        "pwrite64",
+        "read",
+        "readlink",
+        "readv",
+        "recv",
+        "recvfrom",
+        "rename",
+        "renameat",
+        "restart_syscall",
+        "rt_sigaction",
+        "rt_sigprocmask",
+        "rt_sigreturn",
+        "sched_yield",
+        "select",
+        "send",
+        "sendto",
+        "set_robust_list",
+        "setitimer",
+        "setsockopt",
+        "shutdown",
+        "sigaltstack",
+        "stat",
+        "statx",
+        "symlink",
+        "symlinkat",
+        "tgkill",
+        "time",
+        "timer_create",
+        "timer_delete",
+        "timer_gettime",
+        "timer_settime",
+        "times",
+        "tkill",
+        "truncate",
+        "uname",
+        "unlink",
+        "unlinkat",
+        "utimensat",
+        "wait4",
+        "write",
+        "writev"
+      ],
+      "action": "SCMP_ACT_ALLOW",
+      "args": [],
+      "comment": "Base Alpine Linux syscall allowlist (CIS Docker 4.1)"
+    },
+    {
+      "names": [
+        "personality"
+      ],
+      "action": "SCMP_ACT_ALLOW",
+      "args": [
+        {
+          "index": 0,
+          "value": 0,
+          "valueTwo": 0,
+          "op": "SCMP_CMP_EQ"
+        }
+      ],
+      "comment": "Restrict to default personality (NO_NEW_PRIVS)"
+    },
+    {
+      "names": [
+        "ptrace"
+      ],
+      "action": "SCMP_ACT_ALLOW",
+      "args": [
+        {
+          "index": 0,
+          "value": 0,
+          "valueTwo": 0,
+          "op": "SCMP_CMP_EQ"
+        }
+      ],
+      "comment": "Restrict ptrace to PTRACE_TRACEME only (STIG V-220543)"
+    },
+    {
+      "names": [
+        "clone"
+      ],
+      "action": "SCMP_ACT_ALLOW",
+      "args": [
+        {
+          "index": 0,
+          "value": 2114060288,  // CLONE_NEWNS|CLONE_NEWUTS|CLONE_NEWIPC|CLONE_NEWNET
+          "op": "SCMP_CMP_MASKED_EQ"
+        }
+      ],
+      "comment": "Restrict namespace creation (CIS Docker 5.2.5)"
+    },
+    {
+      "names": [
+        "mount",
+        "umount",
+        "umount2"
+      ],
+      "action": "SCMP_ACT_ERRNO",
+      "comment": "Deny filesystem manipulation (NIST SC-7)"
+    }
+  ]
+}

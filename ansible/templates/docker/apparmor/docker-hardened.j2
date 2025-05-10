@@ -1,0 +1,46 @@
+# templates/docker/apparmor/docker-hardened.j2
+#include <tunables/global>
+
+profile docker-hardened flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # Capabilities
+  deny capability sys_module,
+  deny capability sys_time,
+  deny capability syslog,
+
+  # Filesystem
+  {% for path in docker_allowed_paths %}
+  {{ path }} rwk,
+  {% endfor %}
+  deny /proc/[0-9]**/mounts rwklx,
+  deny /sys/** rwklx,
+
+  # Network
+  network inet stream,
+  network inet6 stream,
+  deny network raw,
+
+  # Executables
+  {% for bin in docker_allowed_binaries %}
+  {{ bin }} mr,
+  {% endfor %}
+  deny /usr/sbin/** mrwklx,
+
+  # IPC
+  deny ipc *,
+
+  # Mount
+  deny mount,
+
+  # Pivot root
+  deny pivot_root,
+
+  # Ptrace
+  deny ptrace (read, trace) peer=unconfined,
+
+  # Signal
+  signal (receive) peer=docker-hardened,
+  deny signal peer=unconfined,
+}

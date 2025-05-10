@@ -1,0 +1,61 @@
+---
+# tasks/docker/04_logging.yml - CIS Docker 3.1-3.18 Logging & Monitoring
+- name: "[DOCKER-CIS-3.1] Ensure Docker is configured with appropriate log level"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"log-level":'
+    line: '  "log-level": "{{ docker_log_level | default("info") }}",'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_logging
+
+- name: "[DOCKER-CIS-3.2] Ensure Docker uses supported logging driver"
+  block:
+    - name: Configure JSON-file logging
+      ansible.builtin.lineinfile:
+        path: "/etc/docker/daemon.json"
+        regexp: '"log-driver":'
+        line: '  "log-driver": "{{ docker_log_driver | default("json-file") }}",'
+        insertafter: "{"
+      notify: restart docker
+
+    - name: Configure log rotation
+      ansible.builtin.lineinfile:
+        path: "/etc/docker/daemon.json"
+        regexp: '"log-opts":'
+        line: |-
+          "log-opts": {
+            "max-size": "{{ docker_log_max_size | default("10m") }}",
+            "max-file": "{{ docker_log_max_files | default(3) }}"
+          },
+        insertafter: '"log-driver":'
+      notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_logging
+
+- name: "[DOCKER-CIS-3.18] Ensure containers log all activities"
+  ansible.builtin.command: |
+    docker update --log-driver=json-file \
+    --log-opt max-size=10m \
+    --log-opt max-file=3 \
+    $(docker ps -q)
+  ignore_errors: yes
+  changed_when: false
+  when: docker_required | default(false)
+  tags: docker_logging
+
+- name: "[IM8] Ensure auditd monitors Docker logs"
+  ansible.builtin.copy:
+    src: "templates/etc/audit/rules.d/im8.j2"
+    dest: "/etc/audit/rules.d/im8.rules"
+    owner: root
+    group: root
+    mode: "0640"
+  notify: restart auditd
+  when:
+    - docker_required | default(false)
+    - sg_regulated | default(false)
+  tags:
+    - docker_logging
+    - im8_compliance

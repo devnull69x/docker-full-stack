@@ -1,0 +1,44 @@
+---
+# tasks/docker/03_userns.yml - CIS Docker 5.1-5.25 User Namespace Isolation
+- name: "[DOCKER-CIS-5.1] Ensure user namespace remapping is enabled"
+  block:
+    - name: Create subordinate ID mappings
+      ansible.builtin.copy:
+        content: |
+          dockremap:{{ docker_uid_start | default(100000) }}:65536
+          dockremap:{{ docker_gid_start | default(100000) }}:65536
+        dest: "/etc/subuid"
+        owner: root
+        mode: "0644"
+
+    - name: Configure userns-remap in daemon.json
+      ansible.builtin.lineinfile:
+        path: "/etc/docker/daemon.json"
+        regexp: '"userns-remap":'
+        line: '  "userns-remap": "{{ docker_userns_user | default("dockremap") }}",'
+        insertafter: "{"
+      notify: restart docker
+
+  when:
+    - docker_required | default(false)
+    - docker_enable_userns | default(true)
+  tags: docker_userns
+
+- name: "[DOCKER-CIS-5.9] Ensure containers use read-only root filesystem"
+  ansible.builtin.command: |
+    docker update --restart=no $(docker ps -aq)
+    docker update --read-only=true $(docker ps -aq)
+  ignore_errors: yes
+  changed_when: false
+  when: docker_required | default(false)
+  tags: docker_userns
+
+- name: "[DOCKER-CIS-5.25] Ensure container root FS is mounted as noexec"
+  ansible.builtin.lineinfile:
+    path: "/etc/docker/daemon.json"
+    regexp: '"no-new-privileges":'
+    line: '  "no-new-privileges": {{ docker_no_new_privs | default(true) | to_json }},'
+    insertafter: "{"
+  notify: restart docker
+  when: docker_required | default(false)
+  tags: docker_userns

@@ -1,26 +1,31 @@
 alpine-hardening/
 ├── .ansible-lint                  # Linting rules
 ├── ansible.cfg                    # Ansible configuration
-├── inventory/
-│   ├── production/
-│   │   ├── hosts.yml              # Production hosts (YAML)
-│   │   └── group_vars/            # Group-specific variables
-│   └── staging/                   # Mirror of production for staging
-├── requirements.yml               # Role dependencies
-├── site.yml                       # Master playbook
-├── README.md                      # Project documentation (this file)
 ├── compliance/                    # Compliance mappings
 │   ├── cis.yml                    # CIS Benchmark
-│   ├── nist_800-53.yml            # NIST SP 800-53
+│   ├── cis_docker_host.yml        # CIS Docker Benchmark (NEW)
+│   ├── csa_cyber_essentials.yml   # CSA Cyber Essentials
 │   ├── disa_stig.yml              # DISA STIG
-│   ├── sg_im8.yml                 # Singapore IM8
 │   ├── mas_trm.yml                # MAS TRM
-│   └── csa_cyber_essentials.yml   # CSA Cyber Essentials
+│   ├── nist_800-53.yml            # NIST SP 800-53
+│   └── sg_im8.yml                 # Singapore IM8
 ├── defaults/
 │   └── main.yml                   # Safe defaults
-├── vars/
-│   ├── production.yml             # High-security profile
-│   └── development.yml            # Balanced profile
+├── handlers/
+│   └── main.yml                   # Service handlers
+├── inventory/
+│   ├── production/
+│   │   ├── group_vars/            # Group-specific variables
+│   │   │   ├── alpine_servers.yml # Alpine host variables
+│   │   │   ├── container_host.yml # Docker host variables (NEW)
+│   │   │   └── high_security.yml  # High-sec group vars
+│   │   └── hosts.yml              # Production hosts (YAML)
+│   └── staging/                   # Mirror of production for staging
+├── meta/
+│   └── main.yml                   # Role metadata
+├── README.md                      # Project documentation
+├── requirements.yml               # Role dependencies
+├── site.yml                       # Master playbook
 ├── tasks/                         # Hardening modules
 │   ├── 01_preflight.yml           # System validation
 │   ├── 02_minimal_install.yml     # Package minimization
@@ -31,17 +36,33 @@ alpine-hardening/
 │   ├── 07_logging.yml             # Auditd config
 │   ├── 08_network.yml             # Network stack
 │   ├── 09_crypto.yml              # Cryptography
-│   └── 10_postflight.yml          # Validation
-├── templates/
-│   ├── etc/
-│   │   ├── ssh/sshd_config.j2     # Hardened SSH
-│   │   ├── audit/rules.d/im8.j2   # IM8 audit rules
-│   │   └── sysctl.d/99-hardened.j2 # Kernel settings
+│   ├── 10_postflight.yml          # Validation
+│   └── docker/                    # Docker-specific tasks (NEW)
+│       ├── 01_runtime.yml         # Daemon config (CIS 1.1-1.2)
+│       ├── 02_networking.yml      # Network rules (CIS 2.1-2.18)
+│       ├── 03_userns.yml          # User namespaces (CIS 5.1-5.25)
+│       ├── 04_logging.yml         # Monitoring (CIS 3.1-3.18)
+│       ├── 05_container.yml       # Runtime (CIS 4.1-4.11)
+│       └── 06_host_integration.yml # Host integration (CIS 6.1-6.8)
+├── templates/                     # Configuration templates
+│   ├── docker/                    # Docker configs (NEW)
+│   │   ├── apparmor/              # AppArmor profiles
+│   │   │   └── docker-hardened.j2 # Hardened AppArmor template
+│   │   ├── daemon.json.j2         # Daemon config template
+│   │   └── seccomp/               # Seccomp profiles
+│   │       └── default.json.j2    # Default seccomp policy
+│   ├── etc/                       # System configs
+│   │   ├── audit/
+│   │   │   └── rules.d/
+│   │   │       └── im8.j2         # IM8 audit rules
+│   │   ├── ssh/
+│   │   │   └── sshd_config.j2     # Hardened SSH config
+│   │   └── sysctl.d/
+│   │       └── 99-hardened.j2     # Kernel settings
 │   └── fstab.j2                   # Secure mounts
-├── handlers/
-│   └── main.yml                   # Service handlers
-├── meta/
-│   └── main.yml                   # Role metadata
-└── tests/
-    ├── test_playbook.yml          # Integration tests
-    └── requirements.txt           # Test dependencies
+├── tests/
+│   ├── requirements.txt           # Test dependencies
+│   └── test_playbook.yml          # Integration tests
+└── vars/
+    ├── development.yml            # Balanced profile
+    └── production.yml             # High-security profile

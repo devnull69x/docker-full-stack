@@ -1,0 +1,77 @@
+---
+# NIST SP 800-53 (Rev. 5) Compliance Mapping - Alpine Linux Hardening
+# Cross-references with CIS, DISA STIG, and MAS TRM controls
+
+controls:
+  - id: "AC-3"
+    title: "ACCESS ENFORCEMENT"
+    mappings:
+      cis: ["5.1", "5.2", "5.3"]
+      stig: ["V-204425", "V-204427"]
+      mas_trm: ["2.1.1"]
+    tasks:
+      - tasks/05_user_auth.yml
+      - tasks/03_kernel_hardening.yml
+    audit: |
+      grep -E '^auth\s+required\s+pam_deny.so' /etc/pam.d/*
+      sysctl kernel.yama.ptrace_scope | grep -q 1
+
+  - id: "AC-6"
+    title: "LEAST PRIVILEGE"
+    mappings:
+      cis: ["4.1.1", "4.1.2"]
+      stig: ["V-204440"]
+    tasks:
+      - tasks/02_minimal_install.yml
+      - tasks/05_user_auth.yml
+    audit: |
+      awk -F: '($3 == 0) {print}' /etc/passwd | grep -q '^root:'
+      find / -xdev -type d -perm -0002 -uid +499 -print
+
+  - id: "SI-2"
+    title: "FLAW REMEDIATION"
+    mappings:
+      cis: ["1.8", "1.9"]
+      csa: ["8.1"]
+    tasks:
+      - tasks/01_preflight.yml
+      - handlers/main.yml
+    audit: |
+      apk version -v -l '<' | wc -l | grep -q '^0$'
+      rc-update show | grep -q 'update-motd.*default'
+
+  - id: "SC-28"
+    title: "PROTECTION OF INFORMATION AT REST"
+    mappings:
+      cis: ["4.2", "4.3"]
+      mas_trm: ["4.2.3"]
+    tasks:
+      - tasks/04_filesystem.yml
+      - templates/etc/fstab.j2
+    audit: |
+      mount | grep -E '\/[[:alpha:]]+\s+.*(encrypt|luks)'
+      findmnt --verify -av
+
+profiles:
+  - name: "low"
+    description: "Basic security controls (ALP-1 equivalent)"
+    includes: ["AC-3", "AC-6"]
+
+  - name: "moderate"
+    description: "DOD 800-53 Moderate Baseline"
+    includes: ["AC-3", "AC-6", "SI-2"]
+
+  - name: "high"
+    description: "High-Impact Systems (ALP-4 equivalent)"
+    includes: "*"
+
+metadata:
+  source: "NIST SP 800-53 Rev. 5"
+  os: "Alpine Linux"
+  relationships:
+    cis: "v8.0"
+    stig: "Alpine Linux V1R2"
+    mas_trm: "2023 Edition"
+  notes: |
+    Apply with hardening level:
+    ansible-playbook site.yml -e "nist_profile=moderate"

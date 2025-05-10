@@ -1,0 +1,84 @@
+---
+# tasks/06_services.yml - Service Hardening (SSH, cron, etc.)
+- name: Harden system services (CIS 2.2, 5.1-5.2, STIG V-204442)
+  block:
+    - name: Ensure SSH is installed (CIS 5.2.1)
+      ansible.builtin.package:
+        name: openssh-server
+        state: present
+      when: "'ssh' in ansible_facts.packages"
+
+    - name: Deploy hardened sshd_config (CIS 5.2.3-5.2.22)
+      ansible.builtin.template:
+        src: "templates/etc/ssh/sshd_config.j2"
+        dest: "/etc/ssh/sshd_config"
+        owner: root
+        group: root
+        mode: "0600"
+      notify: restart sshd
+
+    - name: Ensure SSH service is running (CIS 5.2.2)
+      ansible.builtin.service:
+        name: sshd
+        enabled: true
+        state: started
+
+    - name: Restrict cron to authorized users (CIS 5.1.8)
+      ansible.builtin.copy:
+        dest: "/etc/cron.allow"
+        content: "{{ cron_allowed_users | join('\n') }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Remove cron.deny if exists (CIS 5.1.8)
+      ansible.builtin.file:
+        path: "/etc/cron.deny"
+        state: absent
+
+    - name: Set restrictive cron directory permissions (CIS 5.1.5)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: root
+        group: root
+        mode: "0700"
+      loop:
+        - "/etc/cron.d"
+        - "/etc/cron.hourly"
+        - "/etc/cron.daily"
+        - "/etc/cron.weekly"
+        - "/etc/cron.monthly"
+
+    - name: Remove insecure network services (CIS 2.2.3)
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - telnetd
+        - rshd
+        - rexecd
+        - ypserv
+        - tftp-server
+
+  vars:
+    cron_allowed_users: ["root"]
+    sshd_config:
+      Protocol: 2
+      PermitRootLogin: "no"
+      X11Forwarding: "no"
+      MaxAuthTries: 4
+      LoginGraceTime: 60
+      ClientAliveInterval: 300
+      ClientAliveCountMax: 0
+      AllowTcpForwarding: "no"
+      PermitEmptyPasswords: "no"
+      PermitUserEnvironment: "no"
+      KexAlgorithms: "curve25519-sha256"
+      Ciphers: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com"
+      MACs: "hmac-sha2-512"
+
+  handlers:
+    - name: restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

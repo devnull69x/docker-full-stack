@@ -1,0 +1,7 @@
+auth required pam_faillock.so preauth silent deny=5 unlock_time=900
+auth [success=1 default=ignore] pam_unix.so try_first_pass
+auth [default=die] pam_faillock.so authfail deny=5 unlock_time=900
+auth sufficient pam_google_authenticator.so
+account required pam_unix.so
+password required pam_pwquality.so retry=3
+password required pam_unix.so sha512 shadow try_first_pass

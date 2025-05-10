@@ -1,0 +1,64 @@
+---
+# CSA Cyber Essentials Compliance - Alpine Linux
+# Applies to: All hosts regardless of Docker usage
+# Version: 2024.1
+
+controls:
+  - id: csa_1.1
+    title: "Ensure automatic security updates are enabled"
+    tasks:
+      - tasks/02_minimal_install.yml
+    audit: "cat /etc/apk/world | grep -q 'apk-cron' && crontab -l | grep -q 'apk upgrade'"
+    remediation: |
+      apk add apk-cron
+      echo "0 3 * * * /sbin/apk -U upgrade" >> /etc/crontabs/root
+      rc-service crond restart
+    severity: high
+    category: "Patch Management"
+
+  - id: csa_2.4
+    title: "Ensure SSH root login is disabled"
+    tasks:
+      - tasks/05_user_auth.yml
+    audit: "grep -q '^PermitRootLogin no' /etc/ssh/sshd_config"
+    remediation: |
+      sed -i 's/^PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+      rc-service sshd restart
+    severity: critical
+    category: "Access Control"
+
+  - id: csa_3.2
+    title: "Ensure Docker containers run with read-only filesystems"
+    tasks:
+      - tasks/docker/05_container.yml
+    audit: |
+      docker ps --quiet --all | xargs docker inspect --format '{{ .Id }}: Readonly={{ .HostConfig.ReadonlyRootfs }}' | grep -v 'Readonly=true'
+    remediation: |
+      docker update --restart=no $(docker ps -aq)
+      docker rm -f $(docker ps -aq)
+      echo '{"read-only": true}' >> /etc/docker/daemon.json
+      rc-service docker restart
+    severity: medium
+    category: "Container Security"
+    condition: "docker_required == true"
+
+profiles:
+  - name: "essential"
+    description: "Base requirements for all systems"
+    includes: [csa_1.1, csa_2.4]
+
+  - name: "container_aware"
+    description: "Adds Docker-specific controls"
+    includes: [csa_1.1, csa_2.4, csa_3.2]
+
+metadata:
+  framework: "CSA Cyber Essentials"
+  version: "2024.1"
+  applies_to:
+    - "Alpine Linux >=3.18"
+    - "Docker >=24.0 (where present)"
+  notes: |
+    Full compliance requires:
+    - Weekly vulnerability scans
+    - Encrypted backups
+    - Documented incident response plan

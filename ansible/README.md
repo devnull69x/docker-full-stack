@@ -21,11 +21,11 @@ _Aligned with CIS, NIST 800-53, DISA STIG, Singapore IM8, MAS TRM, and CSA Cyber
   - [File Structure](#file-structure)
   - [Quick Start](#quick-start)
   - [Core Operations](#core-operations)
+    - [Docker Host Hardening (NEW)](#docker-host-hardening-new)
     - [Full Hardening](#full-hardening)
     - [Targeted Hardening](#targeted-hardening)
   - [Compliance Operations](#compliance-operations)
-    - [Framework Validation](#framework-validation)
-    - [Report Generation](#report-generation)
+    - [Multi-Standard Validation](#multi-standard-validation)
     - [Manual Compliance Checks](#manual-compliance-checks)
   - [Command Reference](#command-reference)
     - [Core Hardening Workflows](#core-hardening-workflows)
@@ -34,7 +34,7 @@ _Aligned with CIS, NIST 800-53, DISA STIG, Singapore IM8, MAS TRM, and CSA Cyber
     - [Utility Commands](#utility-commands)
   - [Module Reference](#module-reference)
   - [Customization](#customization)
-    - [Security Profiles](#security-profiles)
+    - [Compliance Profile Selection](#compliance-profile-selection)
     - [Template Overrides](#template-overrides)
   - [Testing \& Quality Assurance](#testing--quality-assurance)
     - [Linting](#linting)
@@ -52,12 +52,17 @@ _Aligned with CIS, NIST 800-53, DISA STIG, Singapore IM8, MAS TRM, and CSA Cyber
 
 This project provides automated security hardening for Alpine Linux environments, with comprehensive compliance mappings to major security frameworks including CIS, NIST 800-53, DISA STIG, Singapore IM8, MAS TRM, and CSA Cyber Essentials.
 
+**New in v2.0**:  
+Integrated Docker Host Security with CIS Benchmark compliance, plus expanded support for Singapore IM8 and MAS TRM requirements. The compliance framework now cross-references controls across 6 major standards with automated validation.
+
 ## Prerequisites
 
 - Ansible Core ≥ 2.12
 - Alpine Linux ≥ 3.18
 - Python 3.8+
 - SSH root/sudo access
+- Docker CE ≥ 24.0 (for Docker hardening)
+- jq 1.6+ (for compliance validation)
 
 ## File Structure
 
@@ -87,6 +92,17 @@ ansible-galaxy install -r requirements.yml
 
 ## Core Operations
 
+### Docker Host Hardening (NEW)
+
+```bash
+# Docker Host Hardening (CIS Docker Benchmark)
+ansible-playbook site.yml -i inventory/production/hosts.yml \
+ -e "docker_required=true cis_docker_profile=hardened"
+
+# Docker Configuration Rollback
+ansible-playbook tasks/docker/rollback.yml -e "docker_clean_state=true"
+```
+
 ### Full Hardening
 
 ```bash
@@ -108,6 +124,19 @@ ansible-playbook site.yml --tags "im8"
 ```
 
 ## Compliance Operations
+
+### Multi-Standard Validation
+
+````bash
+# Validate against all standards simultaneously
+ansible-playbook site.yml --tags "compliance_matrix" \
+  -e "cis_profile=hardened im8_profile=enhanced nist_profile=moderate"
+
+| Standard      | Version | Controls Mapped | Coverage | Activation Flag          |
+| ------------- | ------- | --------------- | -------- | ------------------------ |
+| CIS Docker    | v1.4.0  | 68/68           | 100%     | `docker_required: true`  |
+| CSA CyberEss  | v3.0    | 42/42           | 100%     | `csa_compliance: true`   |
+```
 
 ### Framework Validation
 
@@ -131,7 +160,7 @@ ansible-playbook site.yml --tags "compliance_check" -e "framework=cis"
 
 # Generate HTML Report
 ansible-playbook site.yml --tags "compliance_report" -e "format=html"
-```
+````
 
 ### Manual Compliance Checks
 
@@ -216,6 +245,19 @@ ansible-playbook site.yml --tags "compliance_report" -e "report_format=html"
 
 ## Customization
 
+### Compliance Profile Selection
+
+````yaml
+# inventory/group_vars/alpine_servers.yml
+compliance_profiles:
+  base: "cis-hardened"
+  regional:
+    - "im8-enhanced"
+    - "mas-trm-2023"
+  optional:
+    - "nist-moderate"
+    - "docker-cis"
+
 ### Security Profiles
 
 ```yaml
@@ -223,7 +265,7 @@ ansible-playbook site.yml --tags "compliance_report" -e "report_format=html"
 security_level: high
 enable_fips: true
 audit_profile: full
-```
+````
 
 ### Template Overrides
 
@@ -252,13 +294,15 @@ pytest -v
 
 ### Framework Coverage
 
-| Standard      | Version | Controls Mapped | Coverage | Mapped Tasks |
-| ------------- | ------- | --------------- | -------- | ------------ |
-| CIS Benchmark | v1.0    | 192/192         | 100%     | All (01-09)  |
-| Singapore IM8 | 2023    | 85/89           | 95%      | 02,05,07,09  |
-| DISA STIG     | V4R1    | 134/145         | 92%      | 03,04,06,08  |
-| MAS TRM       | 2023    | 47/52           | 90%      | 05,07,09     |
-| NIST 800-53   | Rev5    | 112/128         | 87%      | 03,05,07,08  |
+| Standard      | Version | Controls Mapped | Coverage | Mapped Tasks            |
+| ------------- | ------- | --------------- | -------- | ----------------------- |
+| CIS Benchmark | v1.0    | 192/192         | 100%     | All (01-09)             |
+| Singapore IM8 | 2023    | 85/89           | 95%      | 02,05,07,09             |
+| DISA STIG     | V4R1    | 134/145         | 92%      | 03,04,06,08             |
+| MAS TRM       | 2023    | 47/52           | 90%      | 05,07,09                |
+| NIST 800-53   | Rev5    | 112/128         | 87%      | 03,05,07,08             |
+| CIS Docker    | v1.4.0  | 68/68           | 100%     | `docker_required: true` |
+| CSA CyberEss  | v3.0    | 42/42           | 100%     | `csa_compliance: true`  |
 
 ### Control Density by Task
 
@@ -309,7 +353,9 @@ ANSIBLE_LOG_PATH=./debug.log ansible-playbook site.yml -vvv
 
 - [CIS Alpine Benchmark](https://www.cisecurity.org)
 - [Singapore IM8 Guidelines](https://www.csa.gov.sg)
-- [NIST SP 800-53](https://csrc.nist.gov/projects/risk-management/sp800-53-controls)
+- [NIST SP 800-53](https://csrc.nist.gov/projects/risk-management/sp800-53-controls) - [CIS Docker Benchmark](https://www.cisecurity.org/benchmark/docker)
+- [MAS TRM Guidelines](https://www.mas.gov.sg)
+- [IM8 Technical Guide](https://www.csa.gov.sg/im8)
 
 > **Note**: Always test in staging before production deployment.  
 > Maintain idempotence with `--check` before full runs.

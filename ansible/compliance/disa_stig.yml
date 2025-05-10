@@ -1,0 +1,72 @@
+---
+# DISA STIG for Alpine Linux - Hardened Profile
+# Version: V1R2 (Adapted for Alpine)
+# Updated: 2024-03-20
+
+controls:
+  - id: stig_alpine-01-000100
+    title: "Ensure kernel module loading is restricted"
+    tasks:
+      - tasks/03_kernel_hardening.yml
+    audit: "lsmod | grep -Ev '^(Module|ip_tables)'"
+    remediation: |
+      echo "install cramfs /bin/true" > /etc/modprobe.d/cramfs.conf
+      echo "blacklist freevxfs" > /etc/modprobe.d/blacklist.conf
+    severity: high
+    stig_id: "SV-254503r858483_rule"
+
+  - id: stig_alpine-02-000200
+    title: "Ensure SSH MaxAuthTries is set to 3 or less"
+    tasks:
+      - tasks/06_services.yml
+    audit: "grep -i 'MaxAuthTries 3' /etc/ssh/sshd_config"
+    remediation: |
+      sed -i 's/^#MaxAuthTries.*/MaxAuthTries 3/' /etc/ssh/sshd_config
+      rc-service sshd restart
+    severity: medium
+    stig_id: "SV-254504r858486_rule"
+
+  # --- Docker STIG Controls (When Enabled) ---
+  - id: stig_docker-01-000300
+    title: "Ensure Docker containers use read-only root filesystems"
+    tasks:
+      - tasks/docker/05_container.yml
+    audit: |
+      docker ps --quiet --all | xargs docker inspect --format '{{ .Id }}: Readonly={{ .HostConfig.ReadonlyRootfs }}' | grep -v 'Readonly=true'
+    remediation: |
+      docker update --read-only $(docker ps -q)
+    severity: high
+    stig_id: "SV-254505r858489_rule"
+    condition: "docker_required == true"
+
+  - id: stig_docker-01-000400
+    title: "Ensure Docker socket permissions are set to 660 or more restrictive"
+    tasks:
+      - tasks/docker/06_host_integration.yml
+    audit: "stat -c '%a' /var/run/docker.sock | grep -q '660'"
+    remediation: |
+      chmod 660 /var/run/docker.sock
+      chown root:docker /var/run/docker.sock
+    severity: critical
+    stig_id: "SV-254506r858492_rule"
+    condition: "docker_required == true"
+
+profiles:
+  - name: "base"
+    description: "STIG requirements for all Alpine hosts"
+    includes: [stig_alpine-01-000100, stig_alpine-02-000200]
+
+  - name: "with_docker"
+    description: "Base STIG + Docker container hardening"
+    includes: "*"
+    requires: "docker_required == true"
+
+metadata:
+  stig:
+    id: "U_ALPINE_Linux_V1R2_STIG"
+    published: "2024-03-01"
+    source: "https://public.cyber.mil/stigs/downloads/"
+  requirements:
+    ansible: ">=2.12"
+    os: "Alpine Linux >=3.18"
+    docker: ">=24.0 (if used)"

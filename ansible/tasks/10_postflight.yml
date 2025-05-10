@@ -1,0 +1,38 @@
+---
+# tasks/10_postflight.yml - Final Compliance Verification
+- name: "[VALIDATION-1] Verify kernel hardening"
+  ansible.builtin.command: sysctl -a | grep -E '(kernel.yama.ptrace_scope|kernel.kptr_restrict)'
+  register: kernel_checks
+  changed_when: false
+  failed_when:
+    - "'kernel.yama.ptrace_scope = 1' not in kernel_checks.stdout"
+    - "'kernel.kptr_restrict = 2' not in kernel_checks.stdout"
+
+- name: "[VALIDATION-2] Check Docker security options"
+  ansible.builtin.command: docker info --format '{{ "{{json .SecurityOptions}}" }}'
+  register: docker_security
+  changed_when: false
+  failed_when: >
+    '"name=seccomp,profile=default" not in docker_security.stdout' or
+    '"name=apparmor,profile=docker-hardened" not in docker_security.stdout'
+  when: docker_required | default(false)
+
+- name: "[VALIDATION-3] Verify IM8 audit rules"
+  ansible.builtin.command: auditctl -l | grep -c 'docker'
+  register: audit_rule_count
+  changed_when: false
+  failed_when: audit_rule_count.stdout | int < 5
+  when: sg_regulated | default(false)
+
+- name: "[VALIDATION-4] Check user namespace remapping"
+  ansible.builtin.command: ps -p $(pgrep dockerd) -o user --no-headers
+  register: dockerd_user
+  changed_when: false
+  failed_when: "'dockremap' not in dockerd_user.stdout"
+  when: docker_required | default(false)
+
+- name: "[REPORT] Generate compliance results"
+  ansible.builtin.template:
+    src: "../templates/compliance_report.json.j2"
+    dest: "/var/log/security-compliance-{{ ansible_date_time.iso8601 }}.json"
+  when: validation_checks is defined

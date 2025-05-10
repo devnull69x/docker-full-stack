@@ -1,0 +1,30 @@
+# IM8 Compliance Audit Rules for Docker
+# Version: IM8 v4.0 (2023)
+
+## Docker Daemon Activities
+-w /usr/bin/dockerd -p wa -k docker_daemon
+-w /etc/docker/daemon.json -p wa -k docker_config
+
+## Container Runtime
+-w /var/run/docker.sock -p rwxa -k docker_socket
+-w /usr/bin/docker -p x -k docker_cli
+-w /usr/bin/containerd -p x -k container_runtime
+
+## Critical Docker Files
+-w /etc/default/docker -p wa -k docker_config
+-w /etc/docker/ -p wa -k docker_config_dir
+-w /lib/systemd/system/docker.service -p wa -k docker_service
+
+## IM8-Specific Requirements
+-a always,exit -F path=/usr/bin/docker -F perm=x -F auid>=1000 -F auid!=-1 -k im8_container_cmd
+-a always,exit -F arch=b64 -S mount -F auid>=1000 -F auid!=-1 -k im8_fs_mount
+-a always,exit -F arch=b64 -S execve -F path=/usr/bin/docker-containerd -k im8_container_runtime
+
+## High-Risk Operations
+-a always,exit -F arch=b64 -S setns -F a0=0x20000 -k im8_container_escape
+-a always,exit -F arch=b64 -S ptrace -F a0=0x10 -k im8_container_debug
+
+## Custom IM8 Rules for Alpine
+{% for rule in im8_custom_rules %}
+{{ rule }}
+{% endfor %}

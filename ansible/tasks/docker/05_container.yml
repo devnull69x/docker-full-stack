@@ -1,0 +1,62 @@
+---
+# tasks/docker/05_container.yml - CIS Docker 4.1-4.11 Container Runtime
+- name: "[DOCKER-CIS-4.1] Ensure container users are non-root"
+  block:
+    - name: Check running containers
+      ansible.builtin.command: |
+        docker ps --quiet --all
+      register: container_list
+      changed_when: false
+
+    - name: Verify non-root users
+      ansible.builtin.command: |
+        docker inspect --format '{{ "{{.Config.User}}" }}' {{ item }}
+      loop: "{{ container_list.stdout_lines }}"
+      register: container_users
+      failed_when: "'root' in container_users.stdout"
+      changed_when: false
+  when: docker_required | default(false)
+  tags: docker_runtime
+
+- name: "[DOCKER-CIS-4.5] Restrict sensitive mount points"
+  ansible.builtin.command: |
+    docker inspect --format '{{ "{{json .Mounts}}" }}' {{ item }}
+  loop: "{{ container_list.stdout_lines }}"
+  register: container_mounts
+  changed_when: false
+  failed_when: >
+    "'/etc/shadow' in container_mounts.stdout" or
+    "'/proc/' in container_mounts.stdout"
+  when: docker_required | default(false)
+  tags: docker_runtime
+
+- name: "[DOCKER-CIS-4.9] Disable SSH in containers"
+  ansible.builtin.command: |
+    docker exec {{ item }} which sshd
+  loop: "{{ container_list.stdout_lines }}"
+  ignore_errors: yes
+  register: sshd_check
+  changed_when: false
+  failed_when: sshd_check.rc == 0
+  when: docker_required | default(false)
+  tags: docker_runtime
+
+- name: "[DOCKER-CIS-4.11] Enforce health checks"
+  block:
+    - name: Verify healthcheck status
+      ansible.builtin.command: |
+        docker inspect --format '{{ "{{.State.Health.Status}}" }}' {{ item }}
+      loop: "{{ container_list.stdout_lines }}"
+      register: health_status
+      changed_when: false
+      failed_when: "'healthy' not in health_status.stdout"
+
+    - name: Add healthchecks if missing
+      ansible.builtin.command: |
+        docker update --health-cmd="{{ docker_healthcheck_cmd | default('/bin/check-health') }}" \
+                     --health-interval={{ docker_healthcheck_interval | default('30s') }} \
+                     {{ item }}
+      loop: "{{ container_list.stdout_lines }}"
+      when: "'healthy' not in health_status.stdout"
+  when: docker_required | default(false)
+  tags: docker_runtime

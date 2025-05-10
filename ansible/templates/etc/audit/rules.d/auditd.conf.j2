@@ -1,0 +1,46 @@
+# {{ ansible_managed }}
+# Hardened auditd Configuration (CIS 4.1.x, NIST AU-3, STIG V-204442)
+
+# Core Configuration
+log_file = {{ auditd_settings.log_file | default('/var/log/audit/audit.log') }}
+log_format = RAW
+log_group = root
+priority_boost = 4
+flush = {{ auditd_settings.flush | default('INCREMENTAL_ASYNC') }}
+freq = 50
+max_log_file = {{ auditd_settings.max_log_file | default(50) }}
+num_logs = {{ auditd_settings.num_logs | default(5) }}
+disp_qos = lossy
+dispatcher = /sbin/audispd
+name_format = NONE
+##name = mydomain
+
+# Space Control
+space_left = {{ auditd_settings.space_left | default(75) }}
+space_left_action = {{ auditd_settings.space_left_action | default('EMAIL') }}
+action_mail_acct = {{ auditd_settings.action_mail_acct | default('root') }}
+admin_space_left = {{ auditd_settings.admin_space_left | default(50) }}
+admin_space_left_action = {{ auditd_settings.admin_space_left_action | default('HALT') }}
+disk_full_action = {{ auditd_settings.disk_full_action | default('SUSPEND') }}
+disk_error_action = {{ auditd_settings.disk_error_action | default('SUSPEND') }}
+
+# Performance Tuning
+max_log_file_action = {{ auditd_settings.max_log_file_action | default('KEEP_LOGS') }}
+##max_restarts = 4
+##plugin_dir = /etc/audit/plugins.d
+
+# Network Auditing (Optional)
+##tcp_listen_port = 
+##tcp_listen_queue = 5
+##tcp_max_per_addr = 1
+##tcp_client_ports = 1024-65535
+##tcp_client_max_idle = 0
+##enable_krb5 = no
+##krb5_principal = auditd
+
+# Advanced Options
+use_libwrap = yes
+##distribute_network = no
+q_depth = 400
+overflow_action = SYSLOG
+max_restarts = 10

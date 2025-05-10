@@ -1,0 +1,72 @@
+---
+# MAS TRM Compliance - Alpine Linux
+# Version: TRM v3.1 (2024)
+# Applies to: Financial Institutions in Singapore
+
+controls:
+  - id: mas_trm_7.3.1
+    title: "Ensure cryptographic protocols use approved standards"
+    tasks:
+      - tasks/09_crypto.yml
+      - tasks/docker/01_runtime.yml # For Docker TLS
+    audit: |
+      grep -i "Protocol" /etc/ssh/sshd_config | grep -q "2" && \
+      openssl ciphers -v | grep -q "TLSv1.2"
+    remediation: |
+      echo "Protocol 2" >> /etc/ssh/sshd_config
+      echo '{"tls": true, "tlsverify": true}' >> /etc/docker/daemon.json
+      rc-service sshd restart
+      rc-service docker restart
+    severity: high
+    mas_category: "Cryptography"
+
+  - id: mas_trm_6.1.2
+    title: "Ensure multi-factor authentication for privileged access"
+    tasks:
+      - tasks/05_user_auth.yml
+    audit: |
+      grep -q "pam_google_authenticator.so" /etc/pam.d/sshd && \
+      grep -q "AuthenticationMethods publickey,keyboard-interactive" /etc/ssh/sshd_config
+    remediation: |
+      apk add google-authenticator
+      echo "auth required pam_google_authenticator.so" >> /etc/pam.d/sshd
+      echo "AuthenticationMethods publickey,keyboard-interactive" >> /etc/ssh/sshd_config
+      rc-service sshd restart
+    severity: critical
+    mas_category: "Access Control"
+
+  - id: mas_trm_7.4.1
+    title: "Ensure container runtime uses approved base images"
+    tasks:
+      - tasks/docker/05_container.yml
+    audit: |
+      docker images --format '{{ .Repository }}' | \
+      xargs -n1 grep -L "FROM alpine:3.18" /dev/null
+    remediation: |
+      docker rmi $(docker images | grep -v "alpine:3.18" | awk 'NR>1 {print $3}')
+    severity: high
+    mas_category: "Container Security"
+    condition: "docker_required == true"
+
+profiles:
+  - name: "core"
+    description: "Essential MAS TRM controls"
+    includes: [mas_trm_7.3.1, mas_trm_6.1.2]
+
+  - name: "container_platform"
+    description: "Core + container-specific controls"
+    includes: [mas_trm_7.3.1, mas_trm_6.1.2, mas_trm_7.4.1]
+    requires: "docker_required == true"
+
+metadata:
+  framework: "MAS Technology Risk Management"
+  version: "3.1 (2024)"
+  jurisdiction: "Singapore"
+  references:
+    - "MAS Notice 655 (2023)"
+    - "MAS TRM Guidelines Annex 2B"
+  notes: |
+    Full compliance requires:
+    - Quarterly vulnerability assessments
+    - Encrypted audit logs retained for 5 years
+    - Board-approved risk acceptance for deviations

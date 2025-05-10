@@ -1,0 +1,56 @@
+---
+# remediate.yml - Corrective Actions for Failed Controls
+- hosts: non_compliant_hosts
+  become: true
+  vars_files:
+    - vars/production.yml
+    - group_vars/alpine_servers.yml
+
+  tasks:
+    - name: "[REMEDIATE-1] Fix kernel hardening failures"
+      ansible.builtin.sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        sysctl_set: yes
+        reload: yes
+      loop:
+        - { key: "kernel.yama.ptrace_scope", value: "1" }
+        - { key: "kernel.kptr_restrict", value: "2" }
+      when: "'kernel' in failed_checks"
+
+    - name: "[REMEDIATE-2] Correct Docker security options"
+      block:
+        - name: Reapply seccomp profile
+          ansible.builtin.copy:
+            src: "templates/docker/seccomp/default.json.j2"
+            dest: "/etc/docker/seccomp/default.json"
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Force Docker reload
+          ansible.builtin.service:
+            name: docker
+            state: reloaded
+      when: "'docker_security' in failed_checks"
+
+    - name: "[REMEDIATE-3] Fix IM8 audit rules"
+      ansible.builtin.command: |
+        augenrules --load
+        service auditd restart
+      when: "'im8_audit' in failed_checks"
+
+    - name: "[REMEDIATE-4] Re-enforce user namespace remapping"
+      ansible.builtin.copy:
+        src: "templates/docker/subuid.j2"
+        dest: "/etc/subuid"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: restart docker
+      when: "'userns' in failed_checks"
+
+    - name: "[REPORT] Generate remediation report"
+      ansible.builtin.template:
+        src: "templates/remediation_report.json.j2"
+        dest: "/var/log/security-remediation-{{ ansible_date_time.iso8601 }}.json"

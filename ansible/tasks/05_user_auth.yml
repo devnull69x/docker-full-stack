@@ -1,0 +1,67 @@
+---
+# tasks/05_user_auth.yml - PAM/MFA Configuration (CIS 5.1-5.5, IM8 4.3)
+- name: "[AUTH-1] Configure password policy"
+  ansible.builtin.template:
+    src: "etc/login.defs.j2"
+    dest: "/etc/login.defs"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: update pam
+  tags: auth
+
+- name: "[AUTH-2] Install MFA tools"
+  ansible.builtin.apk:
+    name: "{{ mfa_packages }}"
+    state: present
+  when: hardening_level == "high"
+  tags: auth
+
+- name: "[AUTH-3] Configure PAM for MFA"
+  ansible.builtin.block:
+    - name: Deploy PAM configuration
+      ansible.builtin.template:
+        src: "etc/pam.d/system-login.j2"
+        dest: "/etc/pam.d/system-login"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Enable TOTP for SSH
+      ansible.builtin.lineinfile:
+        path: "/etc/ssh/sshd_config"
+        line: "AuthenticationMethods publickey,keyboard-interactive"
+        regexp: "^AuthenticationMethods"
+        state: present
+      notify: restart sshd
+  when: hardening_level == "high"
+  tags: auth
+
+- name: "[AUTH-4] Enforce sudo restrictions"
+  ansible.builtin.copy:
+    src: "etc/sudoers.d/secure_admin.j2"
+    dest: "/etc/sudoers.d/secure_admin"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  tags: auth
+
+- name: "[AUTH-5] Lock inactive accounts"
+  ansible.builtin.command: |
+    useradd -D -f {{ account_inactivity_days | default(35) }}
+    chage --inactive {{ account_inactivity_days | default(35) }} %s
+  args:
+    stdin: "{% for user in local_users %}{{ user }}\n{% endfor %}"
+  when: local_users is defined
+  tags: auth
+
+- name: "[AUTH-6] Configure SSH Certificates"
+  ansible.builtin.template:
+    src: "etc/ssh/ca.pub.j2"
+    dest: "/etc/ssh/ca.pub"
+    owner: root
+    group: root
+    mode: "0644"
+  when: ssh_ca_public_key is defined
+  tags: ssh

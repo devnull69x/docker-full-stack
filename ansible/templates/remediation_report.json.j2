@@ -1,0 +1,13 @@
+{
+  "timestamp": "{{ ansible_date_time.iso8601 }}",
+  "remediated_controls": [
+    {% for check in remediation_results %}
+    "{{ check }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "pending_issues": [
+    {% for issue in pending_issues %}
+    "{{ issue }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
