@@ -9,6 +9,9 @@ profile docker-hardened flags=(attach_disconnected,mediate_deleted) {
   deny capability sys_module,
   deny capability sys_time,
   deny capability syslog,
+  deny capability sys_admin,
+  deny capability sys_ptrace,
+  deny capability sys_nice,
 
   # Filesystem
   {% for path in docker_allowed_paths %}
@@ -21,6 +24,8 @@ profile docker-hardened flags=(attach_disconnected,mediate_deleted) {
   network inet stream,
   network inet6 stream,
   deny network raw,
+  deny netlink,
+  deny packet,
 
   # Executables
   {% for bin in docker_allowed_binaries %}
@@ -43,4 +48,15 @@ profile docker-hardened flags=(attach_disconnected,mediate_deleted) {
   # Signal
   signal (receive) peer=docker-hardened,
   deny signal peer=unconfined,
+
+  # Kernel modules
+  deny /lib/modules/** rwklx,
+
+  # Device access
+  deny /dev/mem rwklx,
+  deny /dev/kmem rwklx,
+  deny /dev/port rwklx,
+
+  # DebugFS
+  deny /sys/kernel/debug/** rwklx,
 }

@@ -1,0 +1,57 @@
+---
+# Test playbook for Alpine Hardening Automation
+# Run all tests
+# ansible-playbook tests/test_playbook.yml -i inventory/test_hosts.yml
+
+# # Run specific test groups
+# ansible-playbook tests/test_playbook.yml --tags "audit,ssh"
+- name: Verify hardening compliance
+  hosts: all
+  gather_facts: true
+  become: true
+
+  vars:
+    test_audit_rules: true
+    test_ssh_config: true
+    test_docker: "{{ 'docker_required' in vars }}"
+
+  tasks:
+    - name: Check if auditd is installed and running
+      ansible.builtin.service:
+        name: auditd
+        state: started
+        enabled: true
+      when: test_audit_rules
+      tags: audit
+
+    - name: Verify SSH configuration
+      ansible.builtin.command: sshd -T
+      register: sshd_config_test
+      changed_when: false
+      when: test_ssh_config
+      tags: ssh
+
+    - name: Validate kernel parameters
+      ansible.builtin.shell: |
+        sysctl -a | grep -E 'kernel.randomize_va_space|net.ipv4.conf.all.rp_filter'
+      register: kernel_params
+      changed_when: false
+      tags: kernel
+
+    - name: Check Docker security options (if installed)
+      ansible.builtin.shell: |
+        docker info --format '{{ "{{ .SecurityOptions }}" }}'
+      register: docker_security
+      changed_when: false
+      when: test_docker
+      tags: docker
+
+  post_tasks:
+    - name: Show test summary
+      ansible.builtin.debug:
+        msg: |
+          AUDITD STATUS: {{ ansible_facts.services['auditd'].state }}
+          SSH CONFIG TEST: {{ sshd_config_test.rc == 0 | ternary('PASS','FAIL') }}
+          KERNEL PARAMS: {{ kernel_params.stdout_lines }}
+          DOCKER SECURITY: {{ docker_security.stdout | default('Not installed') }}
+      tags: always

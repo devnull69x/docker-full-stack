@@ -1,0 +1,30 @@
+---
+# Development environment variables (less restrictive)
+# # For development environments
+# ansible-playbook site.yml -e "@vars/development.yml"
+
+# # For production environments
+# ansible-playbook site.yml -e "@vars/production.yml"
+security_level: basic
+enable_fips: false
+audit_profile: minimal
+ssh_permit_root_login: "no"
+password_auth: false
+minimum_uid: 1000
+cis_profile: workstation
+im8_profile: basic
+enable_selinux: false
+docker_restrictions: basic
+
+# Package management
+required_packages:
+  - audit
+  - sudo
+  - fail2ban
+  - openssh-server
+
+# Network settings
+network_hardening:
+  disable_ipv6: false
+  firewall_profile: basic
+  tcp_strong_iss: false

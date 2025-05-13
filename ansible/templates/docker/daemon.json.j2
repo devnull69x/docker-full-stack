@@ -1,42 +1,57 @@
 {
   "{{ ansible_managed }}": true,
-  "icc": {{ docker_icc_enabled | default(false) | to_json }},
+  "icc": false,
   "userns-remap": "{{ docker_userns | default('default') }}",
-  "log-driver": "{{ docker_log_driver | default('json-file') }}",
+  "log-driver": "json-file",
   "log-opts": {
-    "max-size": "{{ docker_log_max_size | default('10m') }}",
-    "max-file": "{{ docker_log_max_files | default('3') }}"
+    "max-size": "10m",
+    "max-file": "3",
+    "labels": "security",
+    "env": "os,customer"
   },
-  "log-level": "{{ docker_log_level | default('info') }}",
+  "log-level": "info",
   "default-ulimits": {
     "nofile": {
       "Name": "nofile",
-      "Hard": {{ docker_ulimit_nofile | default(64000) }},
-      "Soft": {{ docker_ulimit_nofile | default(64000) }}
+      "Hard": 64000,
+      "Soft": 64000
+    },
+    "nproc": {
+      "Name": "nproc",
+      "Hard": 1024,
+      "Soft": 512
     }
   },
-  "live-restore": {{ docker_live_restore | default(true) | to_json }},
-  "userland-proxy": {{ docker_userland_proxy | default(false) | to_json }},
-  "no-new-privileges": {{ docker_no_new_privs | default(true) | to_json }},
-  "selinux-enabled": {{ docker_selinux_enabled | default(true) | to_json }},
-  {% if docker_seccomp_profile is defined %}
-  "seccomp-profile": "{{ docker_seccomp_profile }}",
-  {% else %}
+  "live-restore": true,
+  "userland-proxy": false,
+  "no-new-privileges": true,
+  "selinux-enabled": true,
+  "apparmor-profile": "docker-hardened",
   "seccomp-profile": "/etc/docker/seccomp/default.json",
-  {% endif %}
-  "iptables": {{ docker_iptables | default(true) | to_json }},
-  "cgroup-parent": "{{ docker_cgroup_parent | default('docker.slice') }}",
-  "storage-driver": "{{ docker_storage_driver | default('overlay2') }}",
-  "default-runtime": "{{ docker_default_runtime | default('runc') }}",
+  "iptables": true,
+  "cgroup-parent": "docker.slice",
+  "storage-driver": "overlay2",
+  "default-runtime": "runc",
   "runtimes": {
     "runc": {
       "path": "/usr/bin/runc"
-    }{% if docker_gvisor_enabled | default(false) %},
+    },
     "gvisor": {
-      "path": "/usr/bin/runsc"
-    }{% endif %}
+      "path": "/usr/bin/runsc",
+      "runtimeArgs": [
+        "--debug-log=/tmp/runsc.log",
+        "--log-packets"
+      ]
+    }
   },
   "features": {
-    "buildkit": {{ docker_buildkit_enabled | default(true) | to_json }}
-  }
+    "buildkit": true
+  },
+  "experimental": false,
+  "containerd": "/run/containerd/containerd.sock",
+  "max-concurrent-downloads": 3,
+  "max-concurrent-uploads": 3,
+  "default-shm-size": "64m",
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "disable-legacy-registry": true
 }

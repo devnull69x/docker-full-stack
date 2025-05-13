@@ -1,6 +1,6 @@
 # # Full hardening (systems + Docker)
 # ansible-playbook site.yml -i inventory/production -e "docker_required=true"
-
+# ansible-playbook site.yml -i inventory/production/hosts.yml
 # # Systems only
 # ansible-playbook site.yml --tags system
 
