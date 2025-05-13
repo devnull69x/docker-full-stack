@@ -1,101 +1,150 @@
 <context>
 # Overview  
-The Docker Full Stack project is a comprehensive infrastructure-as-code solution for deploying and managing containerized applications. It solves the problem of complex container orchestration by providing pre-configured, production-ready Docker stacks with security, monitoring, and high availability built in. The target users are DevOps engineers and infrastructure teams who need to quickly deploy secure container environments.
+Docker Full Stack is an infrastructure management platform that provides a complete container orchestration solution with security, monitoring, and automation capabilities. It solves the problem of complex container infrastructure management by providing:
+
+- Centralized container management via Portainer
+- Reverse proxy and load balancing via Traefik
+- Monitoring via Grafana and Prometheus
+- Security hardening via Ansible playbooks
+- Automated deployment and configuration
+
+The target users are DevOps engineers and infrastructure teams who need a production-ready container platform with security best practices built-in.
 
 # Core Features  
-- **Multi-Stack Management**: Predefined stacks for different use cases (monitoring, databases, etc.)
-  - Why important: Saves configuration time and ensures best practices
-  - How it works: YAML files define each stack with optimal settings
 
-- **Security Hardening**: Built-in security configurations for Docker and containers
-  - Why important: Reduces attack surface and meets compliance requirements
-  - How it works: Ansible playbooks apply CIS benchmarks and other security standards
+1. **Container Management**
+   - Portainer CE for GUI container management
+   - Docker Swarm support for orchestration
+   - Automated container garbage collection
+   - Why: Provides visibility and control over container infrastructure
 
-- **Monitoring Stack**: Integrated monitoring with Prometheus, Grafana, and alerting
-  - Why important: Provides visibility into container performance and health
-  - How it works: Preconfigured dashboards and metrics collection
+2. **Reverse Proxy & Routing**
+   - Traefik with Let's Encrypt integration
+   - Dynamic configuration for services
+   - Middleware for security headers and rate limiting
+   - Why: Essential for exposing services securely
+
+3. **Monitoring Stack**
+   - Grafana dashboards
+   - Prometheus metrics collection
+   - Log aggregation
+   - Why: Critical for observability and troubleshooting
+
+4. **Security Hardening**
+   - CIS Docker Benchmark compliance
+   - Automated security remediation via Ansible
+   - CrowdSec for intrusion prevention
+   - Why: Meets compliance requirements and reduces attack surface
+
+5. **Automation**
+   - Ansible playbooks for provisioning
+   - Infrastructure as Code approach
+   - Automated certificate management
+   - Why: Enables reproducible deployments
 
 # User Experience  
-- **Primary Persona**: DevOps Engineer
-  - Needs to quickly deploy production-ready container infrastructure
-  - Requires security compliance out of the box
-  - Values automation and reproducibility
 
-- **Key User Flows**:
-  1. Stack deployment via compose files
-  2. Security hardening via Ansible
-  3. Monitoring setup and configuration
+**Primary Personas:**
+1. DevOps Engineer - Needs to deploy and manage containers
+2. Security Engineer - Needs to ensure compliance
+3. Developer - Needs to deploy applications
 
-- **UI/UX Considerations**:
-  - CLI-first experience with clear documentation
-  - Portainer for visual management
-  - Grafana for monitoring visualization
+**Key User Flows:**
+1. Initial cluster deployment
+2. Service onboarding
+3. Security compliance verification
+4. Monitoring and alerting setup
+
+**UI/UX Considerations:**
+- Portainer interface should be accessible but secure
+- Grafana dashboards should be intuitive
+- CLI tools should have consistent interfaces
 </context>
 <PRD>
 # Technical Architecture  
-- **System Components**:
-  - Docker Engine with Swarm mode
-  - Traefik reverse proxy
-  - Portainer management UI
-  - Monitoring stack (Prometheus, Grafana, Alertmanager)
 
-- **Data Models**:
-  - Container configuration stored in YAML
-  - Ansible variables for environment-specific settings
+**System Components:**
+1. Docker Engine - Container runtime
+2. Traefik - Reverse proxy
+3. Portainer - Management UI
+4. Grafana/Prometheus - Monitoring
+5. Ansible - Configuration management
 
-- **APIs and Integrations**:
-  - Docker API for container management
-  - Prometheus API for metrics collection
-  - Traefik API for dynamic configuration
+**Data Models:**
+- Docker container definitions
+- Traefik dynamic configurations
+- Ansible inventory and variables
+- Prometheus metrics storage
 
-- **Infrastructure Requirements**:
-  - Linux hosts with Docker installed
-  - Minimum 4GB RAM per node
-  - Network connectivity between nodes
+**APIs and Integrations:**
+- Docker API
+- Traefik API
+- Prometheus query API
+- Ansible module ecosystem
+
+**Infrastructure Requirements:**
+- Linux hosts with Docker installed
+- Network connectivity between nodes
+- Persistent storage for stateful services
+- DNS configuration for services
 
 # Development Roadmap  
-**MVP Phase**:
-- Core Docker stack deployment
-- Basic security hardening
-- Essential monitoring
 
-**Phase 2**:
-- Advanced security configurations
-- High availability setup
-- Backup and recovery
+**MVP Phase:**
+1. Core Docker installation with security hardening
+2. Traefik reverse proxy setup
+3. Portainer deployment
+4. Basic monitoring stack
 
-**Phase 3**:
-- Multi-cloud deployment support
-- Automated compliance reporting
-- Self-healing capabilities
+**Phase 2:**
+1. Advanced security controls (CrowdSec)
+2. Log aggregation
+3. Backup/restore capabilities
 
-# Logical Dependency Chain
-1. Foundation: Docker and basic networking
-2. Core Services: Reverse proxy and management UI
-3. Security: Hardening playbooks and configurations
-4. Monitoring: Metrics collection and visualization
-5. Advanced: HA, backup, cross-cloud support
+**Phase 3:**
+1. Multi-node cluster support
+2. High availability configurations
+3. Advanced monitoring and alerting
+
+# Logical Dependency Chain  
+
+1. Foundation:
+   - Docker installation and hardening
+   - Basic networking
+   - Initial Traefik setup
+
+2. Core Services:
+   - Portainer
+   - Basic monitoring
+   - Certificate management
+
+3. Advanced Features:
+   - Security scanning
+   - Log management
+   - HA configurations
 
 # Risks and Mitigations  
-- **Technical Challenges**:
-  - Complex networking requirements
-  - Mitigation: Predefined network configurations
 
-- **MVP Scope**:
-  - Defining minimal viable feature set
-  - Mitigation: Focus on core container management first
+**Technical Challenges:**
+- Complex networking between containers
+  - Mitigation: Use overlay networks and test thoroughly
 
-- **Resource Constraints**:
-  - Limited testing environments
-  - Mitigation: Use CI/CD for automated testing
+- Security compliance maintenance
+  - Mitigation: Automate checks with Ansible
+
+**Resource Constraints:**
+- Limited nodes for testing
+  - Mitigation: Use lightweight containers and optimize resource usage
 
 # Appendix  
-- **Research Findings**:
-  - CIS Docker Benchmark v1.4.0
-  - NIST SP 800-190 container security guidelines
 
-- **Technical Specifications**:
-  - Docker 20.10+
-  - Ansible 2.10+
-  - Traefik 2.6+
+**Research Findings:**
+- CIS Docker Benchmark provides excellent security baseline
+- Traefik is more flexible than Nginx for dynamic environments
+- Portainer CE meets most management needs without enterprise features
+
+**Technical Specifications:**
+- Docker 20.10+
+- Ansible 2.10+
+- Traefik 2.0+
 </PRD>

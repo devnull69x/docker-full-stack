@@ -13,8 +13,8 @@
       "temperature": 0.1
     },
     "fallback": {
-      "provider": "anthropic",
-      "modelId": "claude-3-5-sonnet-20241022",
+      "provider": "openrouter",
+      "modelId": "deepseek/deepseek-chat-v3-0324:free",
       "maxTokens": 120000,
       "temperature": 0.1
     }
