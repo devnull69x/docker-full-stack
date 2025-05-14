@@ -41,6 +41,28 @@ docker_config:
     max-size: "10m"
     max-file: "3"
 
+### Container Security Policies (Task 1.2) ###
+docker_network_hardening: true
+dns_allowed_ips: ["172.17.0.2"] # Default to Docker DNS
+
+# Resource Controls
+container_resource_limits:
+  cpu_quota: 50000 # 50% of CPU
+  memory: "512m"
+  pids: 100
+  blkio_weight: 500
+
+# Image Security
+content_trust_enabled: false
+required_image_labels:
+  - "org.opencontainers.image.vendor"
+  - "org.opencontainers.image.source"
+  - "org.opencontainers.image.version"
+
+# Access Controls
+docker_rbac_enabled: true
+docker_audit_level: "info" # [info|warn|error]
+
 ### Compliance Profiles ###
 compliance:
   cis:

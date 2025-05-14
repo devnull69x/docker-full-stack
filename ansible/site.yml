@@ -45,7 +45,7 @@
       loop:
         - tasks/docker/01_runtime.yml
         - tasks/docker/02_networking.yml
-        - tasks/docker/03_userns.yml
+        - tasks/docker_userns.yml
         - tasks/docker/04_logging.yml
         - tasks/docker/05_container.yml
         - tasks/docker/06_host_integration.yml
@@ -62,3 +62,8 @@
         src: templates/report.j2
         dest: "/var/log/hardening-report-{{ ansible_date_time.iso8601 }}.json"
       tags: reporting
+
+- hosts: container_host
+  become: true
+  roles:
+    - docker_install

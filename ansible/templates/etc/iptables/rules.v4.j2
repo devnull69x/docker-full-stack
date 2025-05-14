@@ -27,6 +27,9 @@
 {% if docker_required | default(false) %}
 -A INPUT -s 172.17.0.0/16 -j ACCEPT
 -A FORWARD -i docker0 -o docker0 -j ACCEPT
+{% if docker_network_hardening | default(false) %}
+{{ include 'container_network_hardening.j2' }}
+{% endif %}
 {% endif %}
 
 # Application-Specific Rules
