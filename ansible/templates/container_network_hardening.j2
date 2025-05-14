@@ -1,14 +1,14 @@
-# Container Network Hardening Rules
--A FORWARD -i docker0 -o eth0 -j DROP
--A FORWARD -i eth0 -o docker0 -j DROP  
--A FORWARD -i docker_gwbridge -j DROP
-
-# DNS Security Rules
--A INPUT -p udp --dport 53 -j DROP
--A INPUT -p tcp --dport 53 -j DROP
-{% if dns_allowed_ips is defined %}
-{% for ip in dns_allowed_ips %}
--A INPUT -p udp --dport 53 -s {{ ip }} -j ACCEPT
--A INPUT -p tcp --dport 53 -s {{ ip }} -j ACCEPT
-{% endfor %}
-{% endif %}
+# container_network_hardening.j2 - Docker network security settings
+{
+  "default-address-pools": [
+    {
+      "base": "172.28.0.0/16",
+      "size": 24
+    }
+  ],
+  "iptables": true,
+  "ip-masq": true,
+  "userland-proxy": false,
+  "bridge-nf-call-iptables": true,
+  "bridge-nf-call-ip6tables": true
+}
