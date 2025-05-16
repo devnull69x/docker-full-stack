@@ -12,8 +12,8 @@
   become: true
   vars_files:
     - vars/production.yml
-    - group_vars/alpine_servers.yml
-    - group_vars/container_host.yml
+    - inventory/production/group_vars/alpine_servers.yml
+    - inventory/production/group_vars/container_host.yml
 
   pre_tasks:
     - name: Validate Ansible version
