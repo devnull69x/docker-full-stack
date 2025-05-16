@@ -1,30 +1,31 @@
-# Headscale server configuration
-server_url: "https://your.headscale.domain:443" # Must be HTTPS in production
-listen_addr: "0.0.0.0:8080" # Internal port, should be behind reverse proxy
+# Headscale server configuration - Production Hardened
+server_url: "https://headscale.fuhrerbunker.cloud:443" # Must be HTTPS in production
+listen_addr: "127.0.0.1:8080" # Bind to localhost only, use reverse proxy
 
-# Database configuration
-db_type: "postgres" # PostgreSQL recommended for production
-db_host: "/var/run/postgresql" # Use Unix socket for better security
-db_port: 5432
+# Database configuration - MySQL configuration
+db_type: "mysql"
+db_host: "localhost" # MySQL typically uses TCP even locally
+db_port: 3306
 db_name: "headscale"
 db_user: "headscale"
-db_pass: "your_strong_db_password_here" # Store in environment variable in production
+# db_pass should be set via environment variable in production
 
-# TLS configuration (recommended to terminate TLS at reverse proxy)
-tls_cert_path: "" # Managed by reverse proxy
-tls_key_path: "" # Managed by reverse proxy
+# TLS configuration - Terminate at reverse proxy
+tls_cert_path: ""
+tls_key_path: ""
 
-# ACL configuration
-acl_policy_path: "/etc/headscale/acl.hujson" # Path to your ACL policy file
+# ACL configuration - Using provided ACL policy
+acl_policy_path: "/etc/headscale/acl.hujson"
 
 # DNS configuration
 dns_config:
   nameservers:
     - "1.1.1.1" # Cloudflare
     - "8.8.8.8" # Google
-  domains: []
+    - "8.8.4.4" # Google
+  domains: ["headscale.fuhrerbunker.cloud"]
   magic_dns: true
-  base_domain: "your.domain"
+  base_domain: "tail.fuhrerbunker.cloud"
 
 # Logging configuration
 log:
@@ -39,10 +40,10 @@ rate_limit:
 
 # IP prefixes
 ip_prefixes:
-  - "fd7a:115c:a1e0::/48" # Tailscale's default IPv6 prefix
-  - "100.64.0.0/10" # Tailscale's default IPv4 prefix
+  - "fd7a:115c:a1e0::/48" # Tailscale's default IPv6
+  - "10.13.37.0/24" # Custom IPv4 range for servers
 
-# DERPServer configuration
+# DERP configuration
 derp:
   server:
     enabled: false # Disable built-in DERP, use Tailscale's or your own
@@ -52,27 +53,46 @@ derp:
     stun_listen_addr: ":3478"
   urls:
     - "https://controlplane.tailscale.com/derpmap/default"
-  paths: []
   auto_update_enabled: true
-  update_frequency: 24h
+  update_frequency: "24h"
 
-# Ephemeral node settings
-ephemeral_node_inactivity_timeout: "30m" # Remove ephemeral nodes after inactivity
-
-# Node update settings
+# Node settings
+ephemeral_node_inactivity_timeout: "30m"
 node_update_check_interval: "10s"
+randomize_client_port: true # Security hardening
 
-# Randomize client port to make scanning harder
-randomize_client_port: true
-
-# GRPC settings
-grpc_listen_addr: "127.0.0.1:50443" # Only listen on localhost
+# GRPC settings - Localhost only
+grpc_listen_addr: "127.0.0.1:50443"
 grpc_allow_insecure: false
 
-# Metrics and profiling (disable in production unless needed)
+# Metrics and profiling - Disabled by default
 metrics_listen_addr: ""
 enable_profile: false
 
 # Experimental features
 experimental:
   use_legacy_pre_auth_key: false
+
+# Server-specific settings
+oidc:
+  only_start_if_oidc_is_available: true
+  issuer: "https://auth.yourdomain.com"
+  client_id: "headscale"
+  # client_secret should be set via environment variable
+  scope: ["openid", "profile", "email"]
+  allowed_domains: ["yourdomain.com"]
+
+# Automatic updates
+update_check:
+  enabled: true
+  frequency: "24h"
+
+# API configuration
+api:
+  enabled: true
+  listen_addr: "127.0.0.1:9090" # Localhost only
+  api_key: "" # Set via environment variable
+
+# Server tags for ACL
+server_tags:
+  - "tag:server" # Matches ACL policy

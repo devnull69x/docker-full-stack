@@ -1,102 +1,63 @@
 {
-  // ACL groups
+  // Define server groups and access rules
   "groups": {
-    "group:admin": ["admin@yourdomain.com"],
-    "group:developer": ["dev1@yourdomain.com", "dev2@yourdomain.com"],
-    "group:guest": ["guest@yourdomain.com"],
-    "group:servers": ["tag:server"]
+    "servers": ["unison-master", "unison-node-0", "unison-node-1", "unison-node-2", "unison-node-3"]
   },
 
-  // Tag definitions
-  "tagOwners": {
-    "tag:server": ["group:admin"], // Only admins can tag nodes as servers
-    "tag:prod": ["group:admin"],
-    "tag:staging": ["group:admin", "group:developer"]
+  "hosts": {
+    "server1": "10.13.37.10",
+    "server2": "10.13.37.20", 
+    "server3": "10.13.37.30",
+    "server4": "10.13.37.40",
+    "server5": "10.13.37.50"
   },
 
-  // Access Control Rules
   "acls": [
-    // Admins can access everything
+    // Allow all servers to communicate with each other
     {
       "action": "accept",
-      "src": ["group:admin"],
-      "dst": ["*:*"]
-    },
-
-    // Developers can access staging and developer resources
-    {
-      "action": "accept",
-      "src": ["group:developer"],
-      "dst": [
-        "tag:staging:*",
-        "group:developer:*",
-        "autogroup:self:*"
-      ]
-    },
-
-    // Guests can only access specific services
-    {
-      "action": "accept",
-      "src": ["group:guest"],
-      "dst": [
-        "tag:staging:80",    // HTTP only
-        "tag:staging:443",   // HTTPS only
-        "autogroup:self:*"    // Access to their own devices
-      ]
-    },
-
-    // Servers can talk to other servers
-    {
-      "action": "accept",
-      "src": ["tag:server"],
+      "src": ["group:servers"],
       "dst": ["group:servers:*"]
     },
 
-    // Default deny rule (implicit, but explicit is better)
+    // Default deny rule (implicit)
     {
-      "action": "deny",
+      "action": "accept",
       "src": ["*"],
       "dst": ["*:*"]
     }
   ],
+
+  "tagOwners": {
+    "tag:server": ["autogroup:admin"]
+  },
+
+  "derpMap": {
+    "regions": {
+      "900": {
+        "regionID": 900,
+        "regionCode": "private-derp",
+        "regionName": "Private DERP",
+        "nodes": [
+          {
+            "name": "private-derp-1",
+            "regionID": 900,
+            "hostname": "derp.yourdomain.com",
+            "ipv4": "10.13.37.100",
+            "derpPort": 443
+          }
+        ]
+      }
+    }
+  },
 
   // SSH access rules
   "ssh": [
-    // Admins can SSH to any node
     {
       "action": "accept",
-      "src": ["group:admin"],
-      "dst": ["*:*"],
-      "users": ["root", "admin"]
-    },
-
-    // Developers can SSH to staging and their own devices
-    {
-      "action": "accept",
-      "src": ["group:developer"],
-      "dst": ["tag:staging:*", "autogroup:self:*"],
-      "users": ["devuser"]
-    },
-
-    // Deny all other SSH access
-    {
-      "action": "deny",
-      "src": ["*"],
-      "dst": ["*:*"]
+      "src": ["group:servers"],
+      "dst": ["group:servers"],
+      "users": ["root", "autogroup:nonroot"]
     }
-  ],
-
-  // Node expiration (auto-remove inactive nodes)
-  "autoApprovers": {
-    "routes": {
-      "10.0.0.0/16": ["group:admin"],
-      "192.168.1.0/24": ["group:admin"]
-    },
-    "exitNode": ["group:admin"],
-    "nodes": {
-      "group:guest": ["7d"],    // Guest nodes expire after 7 days
-      "group:developer": ["30d"], // Developer nodes after 30 days
-      "group:admin": ["never"]    // Admin nodes never expire
-    }
-  }
+  ]
 }
