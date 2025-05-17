@@ -29,7 +29,7 @@
       ansible.builtin.command: ps -p $(pgrep dockerd) -o pid,user
       register: dockerd_user
       changed_when: false
-      failed_when: "'dockremap' not in dockerd_user.stdout"
+      failed_when: "'alpine' not in dockerd_user.stdout"
 
     - name: Test network isolation
       ansible.builtin.command: docker network inspect bridge --format '{{ "{{.Options}}" }}'
