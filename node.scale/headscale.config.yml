@@ -1,6 +1,6 @@
 # Headscale server configuration - Production Hardened
 server_url: "https://headscale.fuhrerbunker.cloud:443" # Must be HTTPS in production
-listen_addr: "0.0.0.0:443" # Bind to localhost only, use reverse proxy
+listen_addr: "0.0.0.0:9091" # Bind to localhost only, use reverse proxy
 
 # Database configuration - MySQL configuration
 db_type: "mysql"
@@ -48,8 +48,8 @@ derp:
   server:
     enabled: false # Disable built-in DERP, use Tailscale's or your own
     region_id: 999
-    region_code: "selfhosted"
-    region_name: "Selfhosted DERP"
+    region_code: "fuhrerbunker.cloud"
+    region_name: "fuhrerbunker.cloud Hosted DERP"
     stun_listen_addr: ":3478"
   urls:
     - "https://controlplane.tailscale.com/derpmap/default"
